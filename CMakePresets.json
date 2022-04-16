@@ -1,101 +1,179 @@
 ﻿{
-    "version": 3,
-    "configurePresets": [
-        {
-            "name": "windows-base",
-            "hidden": true,
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "installDir": "${sourceDir}/out/install/${presetName}",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "cl.exe",
-                "CMAKE_CXX_COMPILER": "cl.exe"
-            },
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            }
-        },
-        {
-            "name": "x64-debug",
-            "displayName": "x64 Debug",
-            "inherits": "windows-base",
-            "architecture": {
-                "value": "x64",
-                "strategy": "external"
-            },
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "x64-release",
-            "displayName": "x64 Release",
-            "inherits": "x64-debug",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
-            }
-        },
-        {
-            "name": "x86-debug",
-            "displayName": "x86 Debug",
-            "inherits": "windows-base",
-            "architecture": {
-                "value": "x86",
-                "strategy": "external"
-            },
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "x86-release",
-            "displayName": "x86 Release",
-            "inherits": "x86-debug",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
-            }
-        },
-        {
-            "name": "linux-debug",
-            "displayName": "Linux Debug",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "installDir": "${sourceDir}/out/install/${presetName}",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            },
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Linux"
-            },
-            "vendor": {
-                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
-                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
-                }
-            }
-        },
-        {
-            "name": "macos-debug",
-            "displayName": "macOS Debug",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "installDir": "${sourceDir}/out/install/${presetName}",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            },
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Darwin"
-            },
-            "vendor": {
-                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
-                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
-                }
-            }
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "LAN",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "20"
+      }
+    },
+    {
+      "name": "X64",
+      "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "X86",
+      "hidden": true,
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "Windows",
+      "inherits": [ "LAN" ],
+      "hidden": true,
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": "Windows"
         }
-    ]
+      }
+    },
+    {
+      "name": "Linux",
+      "inherits": [ "LAN" ],
+      "hidden": true,
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "vendor": {
+        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+          "hostOS": "Linux"
+        },
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": "Linux",
+          "intelliSenseMode": "linux-gcc-x64"
+        }
+      }
+    },
+    {
+      "name": "CLANG",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+      }
+    },
+    {
+      "name": "GCC",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc-11",
+        "CMAKE_CXX_COMPILER": "g++-11",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+      }
+    },
+    {
+      "name": "X64-Windows",
+      "inherits": [ "Windows", "X64" ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows",
+        "ASAN_ENABLED": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_CXX_STANDARD": "20"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "windows-msvc-x64"
+        }
+      }
+    },
+    {
+      "name": "X86-Windows",
+      "inherits": [ "Windows", "X86" ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-windows"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "windows-msvc-x86"
+        }
+      }
+    },
+    {
+      "name": "X64-Linux",
+      "inherits": [ "X64", "Linux", "GCC" ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "linux-gcc-x64"
+        }
+      }
+    },
+    {
+      "name": "X86-Linux",
+      "inherits": [ "X86", "Linux" ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-linux"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "linux-gcc-x86"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Targets",
+      "hidden": true,
+      "targets": [ "all_tests", "GDFileJournal_", "GDFileStore_", "GDKeyValue_", "PageGroup_", "spdlog_", "template_utility_", "tmp" ]
+    },
+    {
+      "name": "parallel",
+      "hidden": true,
+      "jobs": 8
+    },
+    {
+      "name": "X64-Windows",
+      "configurePreset": "X64-Windows",
+      "inherits": [ "parallel" ]
+    },
+    {
+      "name": "X86-Windows",
+      "configurePreset": "X86-Windows",
+      "inherits": [ "parallel" ]
+    },
+    {
+      "name": "X64-Linux",
+      "configurePreset": "X64-Linux",
+      "inherits": [ "parallel", "Targets" ]
+    },
+    {
+      "name": "X86-Linux",
+      "configurePreset": "X86-Linux",
+      "inherits": [ "parallel" ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "_TEST_",
+      "displayName": "_TEST_",
+      "configurePreset": "X64-Linux",
+      "output": { "outputOnFailure": true },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true,
+        "jobs": 6
+      },
+      "filter": { "include": { "name": "*_" } }
+    }
+  ]
 }

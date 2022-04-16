@@ -1,0 +1,10 @@
+{
+  "config": {
+    "fsPath": "./fs",
+    "journalPath": "./journalPath",
+    "kvPath": "./kv",
+    "rbPath": "./rb",
+    "journal_callback_worker_count": 8,
+    "journal_write_worker_count": 8
+  }
+}

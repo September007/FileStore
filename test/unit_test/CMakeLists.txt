@@ -4,7 +4,10 @@
 project ("TESTS")
 include_directories(.)
 # Include sub-projects.
-set(dependencis FileStore::FileStore GTest::gtest)
+set(test_deps FileStore::FileStore 
+GTest::gtest 
+spdlog::spdlog_header_only
+)
 
 parse_regex_path( test_sources "./*.cpp")
 message("unit_test find test_sources:${test_sources}")
@@ -16,11 +19,11 @@ foreach(test ${test_sources})
         continue()
     endif()
     add_executable(${TestName} ${test} "./test_main.cpp" )
-    target_link_libraries(${TestName} ${dependencis})
+    target_link_libraries(${TestName} ${test_deps})
 endforeach()
 # 
 list(LENGTH tests_path tests_count)
 if(tests_count GREATER 1)# with test_main
     add_executable(all_tests ${test_sources} "./test_main.cpp" )
-    target_link_libraries(all_tests ${dependencis} )
+    target_link_libraries(all_tests ${test_deps} )
 endif()

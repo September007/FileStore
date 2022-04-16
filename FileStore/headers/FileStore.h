@@ -4,6 +4,12 @@
 #pragma once
 
 #include <iostream>
+#include<JounralingObjectStore.h>
 
-void output_filestore();
-// TODO: Reference additional headers your program requires here.
+class FileStore :public JournalingObjectStore {
+
+public:
+	bool Mount(Context* ctx);
+	void UnMount();
+
+};

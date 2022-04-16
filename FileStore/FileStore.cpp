@@ -5,7 +5,10 @@
 
 using namespace std;
 
+bool FileStore::Mount(Context* ctx) {
+	return JournalingObjectStore::Mount(ctx);
+}
 
-void output_filestore() {
-	std::cout << "this is lib filestore" << endl;
+void FileStore::UnMount() {
+	JournalingObjectStore::UnMount();
 }
