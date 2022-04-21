@@ -4,7 +4,14 @@
     "journalPath": "./journalPath",
     "kvPath": "./kv",
     "rbPath": "./rb",
+
     "journal_callback_worker_count": 8,
-    "journal_write_worker_count": 8
+    "journal_write_worker_count": 8,
+    "default_block_size": 4194304,
+    
+    "traits": {
+      "using_epoll": true,
+      "using_iocp":true
+    }
   }
 }

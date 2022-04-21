@@ -1,24 +1,34 @@
 #pragma once
 #include<string>
-#include<Config.h>
+#include<config.h>
+#include<assistant_utility.h>
+
 using std::string;
 
+bool dd(const string&, const string&, const bool = 1);
+bool dd(const string&, const string&, const bool);
 
 class Context {
 public:
-/**
-* as name indicating
-*/
+	/**
+	* as name indicating
+	*/
 	string fsPath;
 	string journalPath;
 	string kvPath;
 	string rbPath;
 
+	int default_block_size;
 	int journal_callback_worker_count;
 	int journal_write_worker_count;
-
+	Context() {
+		//set by default, change in load
+		m_WriteFile = ::stdio_WriteFile;
+		m_ReadFile = ::stdio_ReadFile;
+		m_WriteFile("", "", 0);
+	}
 	bool load(string name) {
-		auto config = GetConfig(name, "config", "Context", true);
+		auto config = GetConfig(name, "config", "context", true);
 		try {
 			fsPath = filesystem::absolute(config["fsPath"].get<string>()).string();
 			journalPath = filesystem::absolute(config["journalPath"].get<string>()).string();
@@ -27,11 +37,35 @@ public:
 
 			journal_callback_worker_count = config["journal_callback_worker_count"].get<int>();
 			journal_write_worker_count = config["journal_write_worker_count"].get<int>();
-			return true;
+			default_block_size = config["default_block_size"].get<int>();
+			//traits
+			{
+				auto traits = config["traits"];
+#if defined(_WIN64)||defined(_WIN32)
+				if (traits["using_iocp"].get<bool>() == true)
+#else
+				if (traits["using_epoll"].get<bool>() == true)
+#endif				
+				{
+					m_WriteFile = ::stdio_WriteFile;
+					m_ReadFile = ::stdio_ReadFile;
+				}
 		}
+			return true;
+	}
 		catch (std::exception& e) {
 			LOG_ERROR("context", format("context load from [{}] failed", name));
 			return false;
 		}
-	}
+}
+
+	// them often set by load
+	std::function<bool(const string&, const string&, const bool)> m_WriteFile;
+	std::function<string(const string&)> m_ReadFile;
+
+
+	// io accelerate
+	//bool using_iocp = false;
+	//bool using_epoll = false;
+	bool using_io_acc = false;
 };

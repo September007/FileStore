@@ -1,5 +1,5 @@
 #include<test_head.h>
-#include<ObjectMap.h>
+#include<objectMap.h>
 #include<referedBlock.h>
 #define head objectMap
 auto root=filesystem::absolute("./unit_test/objectMap").string();

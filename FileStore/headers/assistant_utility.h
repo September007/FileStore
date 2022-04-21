@@ -37,8 +37,8 @@ constexpr bool is_tuple = is_from_template<tuple, T>;
 
 //Todo: json setting file
 nlohmann::json GetSetting(const string& settingFile);
-string ReadFile(const string& path);
-bool WriteFile(const string& path,	const string& content,	const bool create_parent_dir_if_missing = true);
+string stdio_ReadFile(const string& path);
+bool stdio_WriteFile(const string& path,	const string& content,	const bool create_parent_dir_if_missing = true);
 void Error_Exit(const string&msg="");
 std::string getTimeStr(std::string_view fmt);
 inline std::string getTimeStr() {
@@ -296,7 +296,7 @@ void Read(buffer& buf, T* t) {
 		new(t)T();
 		if (sz == 0)return;
 		while (sz--) {
-			auto r = Read<T::value_type>(buf);
+			auto r = Read<typename T::value_type>(buf);
 			t->push_back(r);
 		}
 	}

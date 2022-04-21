@@ -13,7 +13,7 @@ inline json GetConfigFromFile(const string &filename, const vector<string>& root
 		for (auto& root : rootpaths) {
 			auto path = format("{}/{}", root, filename);
 			if (filesystem::is_regular_file(path)) {
-				auto f = ReadFile(path);
+				auto f = stdio_ReadFile(path);
 				ret = json::parse(f);
 				break;
 			}

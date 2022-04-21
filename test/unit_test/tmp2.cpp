@@ -1,6 +1,6 @@
 #include<test_head.h>
 #include<FileStore.h>
-#include<Config.h>
+#include<config.h>
 #define head TMP2
 
 TEST(head, basic) {
@@ -24,6 +24,6 @@ TEST(head, basic) {
 	cnt = 0;
 	ROPE_Result result;
 	fs.Submit_rope(ROPE(new_gh, { 0,1,2,3 }), result,cb);
-	while (cnt < 1);+
-	result.blocks[0];
+	while (cnt < 1);
+	EXPECT_EQ(wope.block_datas, result.datas);
 }

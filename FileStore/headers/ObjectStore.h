@@ -1,6 +1,6 @@
 #pragma once 
 #include<string>
-#include<Config.h>
+#include<config.h>
 #include<object.h>
 #include<context.h>
 #include<functional>
@@ -14,18 +14,19 @@ using std::string;
 class BlockStore{
 protected :
 	string rbPath;
+	Context* ctx;
 protected:
 	BlockStore() :rbPath() {}
-	bool Mount(Context* ctx) { rbPath = ctx->rbPath; return true;}
+	bool Mount(Context* ctx) { rbPath = ctx->rbPath; this->ctx = ctx; return true; }
 	void UnMount() {}
 
 	void WriteBlock(ReferedBlock rb, const string& data) {
 		auto path=GetReferedBlockStoragePath(rb, rbPath);
-		WriteFile(path, data);
+		ctx->m_WriteFile(path, data, true);
 	}
 	string ReadBlock(ReferedBlock rb) {
 		auto path = GetReferedBlockStoragePath(rb, rbPath);
-		return ReadFile(path);
+		return stdio_ReadFile(path);
 	};
 	//remove physical block, the omap need call another func
 	void EraseBlock(ReferedBlock rb) {
@@ -36,10 +37,26 @@ protected:
 	ReferedBlock addNewReferedBlock(string data, string root_path) {
 		auto rb = ReferedBlock::getNewReferedBlock();
 		rb.refer_count = 0;
-		WriteReferedBlock(rb, root_path, data);
+		auto rbPath = GetReferedBlockStoragePath(rb, root_path);
+		ctx->m_WriteFile(rbPath, data, true);
 		LOG_INFO("rb_log", fmt::format("add new rb[{} ref:{} ,path:{}]",
 			rb.serial, rb.refer_count, GetReferedBlockStoragePath(rb, root_path)));
 		return rb;
+	}
+	inline string ReadReferedBlock(int64_t serial, string root_path) {
+		auto path = GetReferedBlockStoragePath(serial, root_path);
+		return ctx->m_ReadFile(path);
+	}
+	inline string ReadObjectWithRB(ObjectWithRB orb, string root_path) {
+		string ret;
+		for (auto rb : orb.serials_list)
+			ret += ReadReferedBlock(rb, root_path);
+		return ret;
+	}
+	//check data.length is obligated with fs
+	inline void WriteReferedBlock(ReferedBlock rb, string root_path, string data) {
+		auto path = GetReferedBlockStoragePath(rb, root_path);
+		ctx->m_WriteFile(path, data, true);
 	}
 };
 

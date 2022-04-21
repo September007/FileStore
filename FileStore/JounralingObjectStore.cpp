@@ -147,8 +147,8 @@ void JournalingObjectStore::do_wope(WOPE wope,
 	}
 	//phase2.3
 	//@dataflow kv rb update refer_count
-	for (auto& rb : orb.serials_list) {
-		auto rrb = ReferedBlock(rb);
+	for (auto& rbs : orb.serials_list) {
+		auto rrb = ReferedBlock(rbs);
 		auto rb = omap.Read_Meta<ReferedBlock>(rrb);
 		rb.refer_count++;
 		omap.Write_Meta<ReferedBlock>(rb);
@@ -177,7 +177,7 @@ void JournalingObjectStore::do_wope(WOPE wope,
 			if (!filesystem::is_regular_file(to_path)) {
 				if (!filesystem::is_directory(to_path_parent_dir))
 					filesystem::create_directories(to_path_parent_dir);
-				filesystem::copy(from_path, to_path_parent_dir);
+				filesystem::copy(from_path, to_path_parent_dir,filesystem::copy_options::overwrite_existing);
 				LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
 			}
 		}

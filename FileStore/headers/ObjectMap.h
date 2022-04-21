@@ -1,7 +1,7 @@
 #pragma once
 #include<simulate_table.h>
 #include<assistant_utility.h>
-#include<rocksdb\db.h>
+#include<rocksdb/db.h>
 #include<context.h>
 using namespace rocksdb;
 using std::is_same_v;

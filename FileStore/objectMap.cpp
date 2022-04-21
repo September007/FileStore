@@ -28,7 +28,7 @@ bool ObjectMap::Mount(Context* context) {
 bool ObjectMap::UnMount() {
 	if(db!=nullptr) 
 		db->Close();
-	db == nullptr;
+	db = nullptr;
 	return true;
 }
 

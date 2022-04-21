@@ -23,10 +23,10 @@ nlohmann::json GetSetting(const string& settingFile) {
 	};
 	return setting;
 };
-string ReadFile(const string& path) {
+string stdio_ReadFile(const string& path) {
 	fstream in(path);
 	if (!in.good()) {
-		LOG_INFO("IO", fmt::format("readfile[{}] failed.", path));
+		LOG_INFO("IO", fmt::format("stdio_ReadFile[{}] failed.", path));
 		return "";
 	}
 	string ret;
@@ -48,7 +48,7 @@ string ReadFile(const string& path) {
 #endif
 	return ret;
 }
-bool WriteFile(const string& path, const string& content, const bool create_parent_dir_if_missing) try {
+bool stdio_WriteFile(const string& path, const string& content, const bool create_parent_dir_if_missing) try {
 	//auto& m = GetMutex(__func__);
 	//unique_lock lg(m);
 	auto&objDir = path;
@@ -85,7 +85,6 @@ void Error_Exit(const string &msg) {
 	spdlog::default_logger()->error("msg:[{}]get error exit,check log for more info",msg);
 	exit(0);
 }
-
 std::string getTimeStr(std::string_view fmt) {
 	std::time_t now =
 		std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());

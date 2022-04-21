@@ -1,9 +1,9 @@
 #pragma once
-#include<ObjectStore.h>
+#include<objectStore.h>
 #include<referedBlock.h>
 #include<map>
 #include<thread_pool.h>
-#include<ObjectMap.h>
+#include<objectMap.h>
 using CallBackIndex =  uint64_t;
 class JournalingObjectStore :public ObjectStore {
 protected:

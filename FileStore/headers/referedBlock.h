@@ -1,7 +1,7 @@
 #pragma once
 #include<assistant_utility.h>
 #include<chrono>
-#include<boost\container_hash\hash.hpp>
+//#include<boost\container_hash\hash.hpp>
 #include<object.h>
 //#include<GDKeyValue.h>
 using std::string;
@@ -44,19 +44,4 @@ inline string GetReferedBlockStoragePath(const ReferedBlock &rb, string root_pat
 	auto p3 = (s & 0x00000000ffff0000ll) >> 16;
 	auto p4 = (s & 0x000000000000ffffll) >> 0;
 	return fmt::format("{}/{}/{}/{}/{}.txt", root_path, p1, p2, p3, p4);
-}
-inline string ReadReferedBlock(int64_t serial, string root_path) {
-	auto path = GetReferedBlockStoragePath(serial, root_path);
-	return ReadFile(path);
-}
-inline string ReadObjectWithRB(ObjectWithRB orb,string root_path) {
-	string ret;
-	for (auto rb : orb.serials_list)
-		ret += ReadReferedBlock(rb, root_path);
-	return ret;
-}
-//check data.length is obligated with fs
-inline void WriteReferedBlock(ReferedBlock rb, string root_path,string data) {
-	auto path = GetReferedBlockStoragePath(rb, root_path);
-	WriteFile(path, data);
 }

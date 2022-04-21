@@ -12,4 +12,8 @@ public:
 	bool Mount(Context* ctx);
 	void UnMount();
 
+	~FileStore() {
+		UnMount();
+	}
+	
 };
