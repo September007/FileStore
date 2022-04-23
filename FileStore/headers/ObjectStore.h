@@ -58,6 +58,9 @@ protected:
 		auto path = GetReferedBlockStoragePath(rb, root_path);
 		ctx->m_WriteFile(path, data, true);
 	}
+	inline string GetReferedBlockStoragePath(const ReferedBlock& rb, string root_path) {
+		return ctx->m_GetReferedBlockStoragePath(rb, root_path);
+	}
 };
 
 class ObjectStore:public BlockStore {

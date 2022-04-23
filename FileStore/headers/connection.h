@@ -33,7 +33,7 @@ public:
 };
 //network connection node info
 using InfoForNetNode = InfoForOSD;
-inline auto GetOSDConfig(const string& osd_name) {
+inline pair<bool,InfoForOSD> GetOSDConfig(const string& osd_name) {
 	auto http_config = GetConfig(osd_name, "http_server");
 	{
 		if (http_config.empty()||http_config["addr"].empty()||http_config["port"].empty()) {
@@ -41,14 +41,14 @@ inline auto GetOSDConfig(const string& osd_name) {
 			Error_Exit();
 		}
 	}
-	auto host = http_config["addr"].get<string>();
-	auto port = http_config["port"].get<int>();
+	string host = http_config["addr"].get<string>();
+	int port = http_config["port"].get<int>();
 	if (host == "" || port == int{}) {
 		LOG_ERROR("server", fmt::format("read {}::server config failed", osd_name));
-		return make_pair<bool, InfoForOSD>(false, InfoForOSD());
+		return std::make_pair<bool, InfoForOSD>(false, InfoForOSD());
 	}
 	else
-		return make_pair<bool, InfoForOSD>(true, InfoForOSD(osd_name, host, port));
+		return std::make_pair<bool, InfoForOSD>(true,  InfoForOSD(osd_name, host, port)) ;
 }
 //@emergency add drawback
 enum class reqType {

@@ -275,3 +275,36 @@ public:
 	auto GetKey() { return make_tuple(&opeId); }
 	auto GetAttr() { return make_tuple(&rope); }
 };
+
+
+
+class ReferedBlock {
+public:
+	//get from meta server
+	//as a unique in range of whole storage system
+	int64_t serial;
+	int32_t refer_count;
+	ReferedBlock(int64_t serial = 0, int32_t refer_count = 0) :serial(serial), refer_count(refer_count) {}
+	static ReferedBlock getNewReferedBlock() {
+		//this just create a increment serial for observe
+		return ReferedBlock{ chrono::system_clock::now().time_since_epoch().count(),0 };
+	}
+	operator int64_t() { return serial; }
+	auto GetES()const { return make_tuple(&serial, &refer_count); }
+	auto GetKey()const { return make_tuple(&serial); }
+	auto GetAttr()const { return make_tuple(&refer_count); }
+};
+
+//storage data object represented by refered block
+class ObjectWithRB {
+public:
+	list<int64_t> serials_list;
+	GHObject_t orb;
+	auto GetAttr() { return make_tuple(&serials_list); }
+	auto GetKey() { return make_tuple(&orb); }
+	auto GetES() { return make_tuple(&serials_list, &orb); }
+};
+
+//under root path, referedBlock managed as multi-demension array
+//now assusm it's 4-demension,
+//this only interset in referedBlock.serial

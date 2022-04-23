@@ -1,13 +1,5 @@
 #include<JounralingObjectStore.h>
 
-inline auto GetParentDir(string& path) {
-	//DebugArea(auto abpath = filesystem::absolute(path); LOG_EXPECT_EQ("IO", abpath.string(), path));
-	for (int i = path.size() - 1; i >= 0; --i)
-		if (path[i] != '/' && path[i] != '\\')
-			path.pop_back();
-		else break;
-	return path;
-}
 void JournalingObjectStore::RegisterCallback(CallBackIndex idx, CallBackType call) {
 	unique_lock lg(access_to_callbacks);
 	callbacks[idx].push_back(move(call));
@@ -174,11 +166,16 @@ void JournalingObjectStore::do_wope(WOPE wope,
 			auto to_path = GetReferedBlockStoragePath(rb, this->fspath);
 			auto from_path = GetReferedBlockStoragePath(rb, this->journalPath);
 			auto to_path_parent_dir = GetParentDir(to_path);
-			if (!filesystem::is_regular_file(to_path)) {
-				if (!filesystem::is_directory(to_path_parent_dir))
-					filesystem::create_directories(to_path_parent_dir);
-				filesystem::copy(from_path, to_path_parent_dir,filesystem::copy_options::overwrite_existing);
-				LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
+			try {
+				if (!filesystem::is_regular_file(to_path)) {
+					if (!filesystem::is_directory(to_path_parent_dir))
+						filesystem::create_directories(to_path_parent_dir);
+					filesystem::copy(from_path, to_path_parent_dir, filesystem::copy_options::overwrite_existing);
+					LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
+				}
+			}
+			catch (std::exception& e) {
+				cout << e.what() << endl;
 			}
 		}
 	}

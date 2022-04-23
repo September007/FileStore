@@ -15,10 +15,15 @@ inline shared_ptr<spdlog::logger> GetLogger(const string& name,
 	// if missing,create
 	if (ret == nullptr) {
 		{
+			//create is mutually exclusive
+			static std::mutex m_;
+			std::unique_lock lg(m_);
+			if (ret != nullptr)
+				return ret;
 			auto logfilename = fmt::format("{}/{}.log", logFileRoot, force_isolate ? name : fileClass);
 			bool create_new = false;
-			ret = spdlog::synchronous_factory::create<
-				spdlog::sinks::basic_file_sink_st>(name, logfilename, false);
+			ret // = spdlog::basic_logger_mt<spdlog::synchronous_factory>(name, logfilename, false);
+				= spdlog::synchronous_factory::create<spdlog::sinks::basic_file_sink_st>(name, logfilename, false);
 			if (ret != nullptr)
 				create_new = true;
 			// if create failed, return default

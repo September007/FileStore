@@ -3,6 +3,7 @@
 #define GD_CONFIG_HEAD
 #include<nlohmann/json.hpp>
 #include<assistant_utility.h>
+#include<context_methods.h>
 #include<map>
 using nlohmann::json;
 using fmt::format;

@@ -2,7 +2,8 @@
 #include<string>
 #include<config.h>
 #include<assistant_utility.h>
-
+#include<object.h>
+#include<context_methods.h>
 using std::string;
 
 bool dd(const string&, const string&, const bool = 1);
@@ -21,12 +22,7 @@ public:
 	int default_block_size;
 	int journal_callback_worker_count;
 	int journal_write_worker_count;
-	Context() {
-		//set by default, change in load
-		m_WriteFile = ::stdio_WriteFile;
-		m_ReadFile = ::stdio_ReadFile;
-		m_WriteFile("", "", 0);
-	}
+	Context();
 	bool load(string name) {
 		auto config = GetConfig(name, "config", "context", true);
 		try {
@@ -54,7 +50,7 @@ public:
 			return true;
 	}
 		catch (std::exception& e) {
-			LOG_ERROR("context", format("context load from [{}] failed", name));
+			LOG_ERROR("context", format("context load from [{}] failed,catch error[{}]", name,e.what()));
 			return false;
 		}
 }
@@ -62,7 +58,7 @@ public:
 	// them often set by load
 	std::function<bool(const string&, const string&, const bool)> m_WriteFile;
 	std::function<string(const string&)> m_ReadFile;
-
+	std::function<string(const ReferedBlock& rb, string root_pat)> m_GetReferedBlockStoragePath;
 
 	// io accelerate
 	//bool using_iocp = false;

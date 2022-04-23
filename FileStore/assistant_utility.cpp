@@ -1,7 +1,7 @@
 ﻿#include<assistant_utility.h>
 #include<filesystem>
 #include<Mutex.h>
-
+#include<object.h>
 nlohmann::json GetSetting(const string& settingFile) {
 	static nlohmann::json default_setting = R"({
 	"setting_name":"default",
@@ -23,63 +23,6 @@ nlohmann::json GetSetting(const string& settingFile) {
 	};
 	return setting;
 };
-string stdio_ReadFile(const string& path) {
-	fstream in(path);
-	if (!in.good()) {
-		LOG_INFO("IO", fmt::format("stdio_ReadFile[{}] failed.", path));
-		return "";
-	}
-	string ret;
-#ifdef __linux__
-	in.seekg(0, ios_base::end);
-	size_t length = in.tellg();
-	in.seekg(ios_base::beg);
-	ret.resize(length);
-	in.read(const_cast<char*>(ret.c_str()), length);
-	// if (ret.back() == '\0')ret.pop_back();
-#else
-	// windows file storage would append {how much '\n' in file} '\0' chars at end
-	// of file so read as above would read these '\0'
-#ifdef _WIN32
-	stringstream ss;
-	ss << in.rdbuf();
-	ret = ss.str();
-#endif
-#endif
-	return ret;
-}
-bool stdio_WriteFile(const string& path, const string& content, const bool create_parent_dir_if_missing) try {
-	//auto& m = GetMutex(__func__);
-	//unique_lock lg(m);
-	auto&objDir = path;
-	ofstream out(objDir);
-	if (!out.good()) {
-		auto parentDir = filesystem::path(objDir).parent_path();
-		// maybe missing pg directory
-		if (create_parent_dir_if_missing &&
-			!filesystem::is_directory(parentDir.c_str())) {
-			//GetLogger("IO")->warn(
-			//"write file[{}] failed because parent dir missed,now creating.{}:{}",
-			//	path, __FILE__, __LINE__);
-			filesystem::create_directories(parentDir);
-			out.open(objDir);
-			LOG_ASSERT_TRUE("IO", out.good(), "write file because create parent dir failed ");
-		}
-		else {
-			GetLogger("IO")->error("open file[{}] failed .{}:{}", path, __FILE__,
-				__LINE__);
-			return false;
-		}
-	}
-	out << content << flush;
-	out.close();
-	return out.good();
-}
-catch (std::exception& ex) {
-	GetLogger("IO")->error("catch error at{}:{}\n{}", __FILE__, __LINE__, ex.what());
-	throw ex;
-	return false;
-}
 
 void Error_Exit(const string &msg) {
 	spdlog::default_logger()->error("msg:[{}]get error exit,check log for more info",msg);
@@ -94,6 +37,24 @@ std::string getTimeStr(std::string_view fmt) {
 }
 
 
+string GetReferedBlockStoragePath_deep4(const ReferedBlock& rb, string root_path) {
+	auto s = rb.serial;
+	//(s = boost::hash<decltype(rb.serial)>()(rb.serial));
+	s = std::hash<int64_t>()(rb.serial);
+	auto p1 = (s & 0xffff000000000000ll) >> 48;
+	auto p2 = (s & 0x0000ffff00000000ll) >> 32;
+	auto p3 = (s & 0x00000000ffff0000ll) >> 16;
+	auto p4 = (s & 0x000000000000ffffll) >> 0;
+	return fmt::format("{}/{}/{}/{}/{}.txt", root_path, p1, p2, p3, p4);
+}
+ string GetReferedBlockStoragePath_deep2(const ReferedBlock& rb, string root_path) {
+	auto s = rb.serial;
+	//(s = boost::hash<decltype(rb.serial)>()(rb.serial));
+	s = std::hash<int64_t>()(rb.serial);
+	auto p1 = (s & 0xffffffff00000000ll) >> 32;
+	auto p2 = (s & 0x00000000ffffffffll) >> 0;
+	return fmt::format("{}/{}/{}.txt", root_path, p1, p2);
+}
 
 Slice:: Slice(const string& str) :data(make_shared<buffer>(str)), start(0), end(str.size()) {
 }
@@ -115,3 +76,12 @@ void Slice::Write(buffer& buf,const Slice* s) {
 	auto i=std::get<0>(a);
 }
 
+
+ string GetParentDir(string& path) {
+	//DebugArea(auto abpath = filesystem::absolute(path); LOG_EXPECT_EQ("IO", abpath.string(), path));
+	for (int i = path.size() - 1; i >= 0; --i)
+		if (path[i] != '/' && path[i] != '\\')
+			path.pop_back();
+		else break;
+	return path;
+}

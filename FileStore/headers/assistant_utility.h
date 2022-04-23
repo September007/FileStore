@@ -27,6 +27,7 @@
 #include<list>
 #include<memory>
 #include<logger.h>
+
 using namespace std;
 template<template<typename...args>typename templateType, typename T>
 constexpr bool is_from_template = false;
@@ -37,8 +38,7 @@ constexpr bool is_tuple = is_from_template<tuple, T>;
 
 //Todo: json setting file
 nlohmann::json GetSetting(const string& settingFile);
-string stdio_ReadFile(const string& path);
-bool stdio_WriteFile(const string& path,	const string& content,	const bool create_parent_dir_if_missing = true);
+
 void Error_Exit(const string&msg="");
 std::string getTimeStr(std::string_view fmt);
 inline std::string getTimeStr() {
@@ -356,4 +356,7 @@ template<typename T>
 inline T from_string(string str) {
 	return from_buffer<T>(buffer(move(str)));
 }
+
+
+string GetParentDir(string& path);
 #endif  // ASSISTANT_UTILITY_HEAD
