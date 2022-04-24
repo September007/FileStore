@@ -15,5 +15,10 @@ public:
 	~FileStore() {
 		UnMount();
 	}
-	
+
+	//imple the StoreInterface
+	void RecordData(const string& key, const string& data) override;
+	string ReadData(const string& key) override;
+	void RemoveData(const string& key) override;
+	void CopyData(const string& keyFrom, const string& keyTo) override;
 };

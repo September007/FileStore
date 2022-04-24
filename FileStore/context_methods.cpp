@@ -1,4 +1,5 @@
 #include<context_methods.h>
+#pragma warning(disable:4996)
 string stdio_ReadFile(const string& path) {
 	fstream in(path);
 	if (!in.good()) {
@@ -99,7 +100,7 @@ bool keep_WriteFile(const string& path, const string& content, const bool create
 	while (p < end) {
 		auto r = fwrite(p, 1, sz, fd);
 		if (r > 0) {
-			sz - r;
+			sz -= r;
 			p += r;
 		}
 		else if (r == 0) {

@@ -45,7 +45,7 @@ inline vector<WOPE> create_test_WOPES(int sz,const unsigned int block_cnt=4,int 
 	auto new_gh = gh;	new_gh.generation++;
 	WOPE wope(gh, new_gh, vector<WOPE::opetype>{block_cnt,WOPE::opetype::Insert}, {}, {});
 	wope.block_datas.reserve(block_cnt); 
-	for (int i = 0; i < block_cnt; ++i) {
+	for (int i = 0; i < int(block_cnt); ++i) {
 		wope.block_nums.push_back(i);
 		wope.block_datas.push_back(string(block_data_length, '0' + i));
 	}

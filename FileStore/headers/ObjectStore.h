@@ -8,15 +8,25 @@
 
 using CallBackType = std::function<void()>;
 using std::string;
+//interface
+class StoreInterface {
+public:
+	virtual ~StoreInterface() {};
+	//using string as unified key of stored data,other key like GHObject should serialize
+	virtual void RecordData(const string& key, const string &data) = 0;
+	virtual string ReadData(const string& key) = 0;
+	virtual void RemoveData(const string& key) = 0;
+	virtual void CopyData(const string& keyFrom, const string& keyTo) = 0;
+};
 /**
 * storage for block data
 */
-class BlockStore{
+class BlockStore:public StoreInterface{
 protected :
 	string rbPath;
 	Context* ctx;
 protected:
-	BlockStore() :rbPath() {}
+	BlockStore() :rbPath() ,ctx(nullptr) {}
 	bool Mount(Context* ctx) { rbPath = ctx->rbPath; this->ctx = ctx; return true; }
 	void UnMount() {}
 
