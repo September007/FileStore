@@ -20,6 +20,7 @@ foreach(test ${test_sources})
     endif()
     add_executable(${TestName} ${test} "./test_main.cpp" )
     target_link_libraries(${TestName} ${test_deps})
+    message("add unit_test ${TestName}")
 endforeach()
 # 
 list(LENGTH tests_path tests_count)

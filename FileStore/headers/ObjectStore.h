@@ -20,14 +20,14 @@ protected:
 	bool Mount(Context* ctx) { rbPath = ctx->rbPath; this->ctx = ctx; return true; }
 	void UnMount() {}
 
-	void WriteBlock(ReferedBlock rb, const string& data) {
-		auto path=GetReferedBlockStoragePath(rb, rbPath);
-		ctx->m_WriteFile(path, data, true);
-	}
-	string ReadBlock(ReferedBlock rb) {
-		auto path = GetReferedBlockStoragePath(rb, rbPath);
-		return stdio_ReadFile(path);
-	};
+	//void WriteBlock(ReferedBlock rb, const string& data) {
+	//	auto path=GetReferedBlockStoragePath(rb, rbPath);
+	//	ctx->m_WriteFile(path, data, true);
+	//}
+	//string ReadBlock(ReferedBlock rb) {
+	//	auto path = GetReferedBlockStoragePath(rb, rbPath);
+	//	return stdio_ReadFile(path);
+	//};
 	//remove physical block, the omap need call another func
 	void EraseBlock(ReferedBlock rb) {
 		auto path = GetReferedBlockStoragePath(rb, rbPath);

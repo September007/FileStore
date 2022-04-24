@@ -191,6 +191,6 @@ ROPE_Result JournalingObjectStore::do_rope(ROPE rope, CallBackIndex when_read_do
 		serials.push_back(s);
 	for (int i = 0; i < rope.blocks.size(); ++i)
 		//@todo: try read hot data from journal cache instead of fs 
-		block_datas[i] = BlockStore::ReadBlock(serials[rope.blocks[i]]);
+		block_datas[i] = BlockStore::ReadReferedBlock(serials[rope.blocks[i]],this->fspath);
 	return ROPE_Result(GetOpeId(rope), rope.ghobj, rope.blocks, move(block_datas));
 }
