@@ -10,3 +10,4 @@ PointerAlignment: Left
 UseCRLF: false
 AlignArrayOfStructures:  Right
 AlignConsecutiveMacros: AcrossEmptyLines
+AlwaysBreakTemplateDeclarations: Yes
