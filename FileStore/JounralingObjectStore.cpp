@@ -232,4 +232,5 @@ void JournalingObjectStore::do_withdraw_wope(WOPE wope,
         omap.Write_Meta<ReferedBlock>(rb);
     }
     omap.Erase_Meta<GHObject_t>(new_gh);
+    SubmitCallbacks(when_withdraw_done);
 }
