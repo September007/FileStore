@@ -24,8 +24,14 @@ public:
 	int journal_write_worker_count;
 	Context();
 	bool load(string name) {
-		auto config = GetConfig(name, "config", "context", true);
-		try {
+		json config;
+//the default context is up to platform
+#ifdef _WIN32
+		config=GetConfig(name, "config", "windows.context", true);
+#else
+		config = GetConfig(name, "config", "linux.context", true);
+#endif 
+		 try {
 			fsPath = filesystem::absolute(config["fsPath"].get<string>()).string();
 			journalPath = filesystem::absolute(config["journalPath"].get<string>()).string();
 			kvPath = filesystem::absolute(config["kvPath"].get<string>()).string();

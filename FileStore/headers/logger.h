@@ -18,7 +18,8 @@ inline shared_ptr<spdlog::logger> GetLogger(const string& name,
 			//create is mutually exclusive
 			static std::mutex m_;
 			std::unique_lock lg(m_);
-			if (ret != nullptr)
+			//try get again
+			if ((ret = spdlog::get(name)) != nullptr)
 				return ret;
 			auto logfilename = fmt::format("{}/{}.log", logFileRoot, force_isolate ? name : fileClass);
 			bool create_new = false;

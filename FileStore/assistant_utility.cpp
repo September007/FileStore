@@ -2,6 +2,7 @@
 #include<filesystem>
 #include<Mutex.h>
 #include<object.h>
+#pragma wanring(disable:4996)
 nlohmann::json GetSetting(const string& settingFile) {
 	static nlohmann::json default_setting = R"({
 	"setting_name":"default",

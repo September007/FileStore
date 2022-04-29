@@ -128,6 +128,13 @@
           "intelliSenseMode": "linux-gcc-x86"
         }
       }
+    },
+    {
+      "name": "X64-Windows-Release",
+      "inherits": [ "X64-Windows" ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -160,6 +167,10 @@
       "name": "X86-Linux",
       "configurePreset": "X86-Linux",
       "inherits": [ "parallel" ]
+    },
+    {
+      "name": "X64-Windows-Release",
+      "configurePreset": "X64-Windows-Release"
     }
   ],
   "testPresets": [
