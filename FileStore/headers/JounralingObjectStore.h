@@ -45,10 +45,16 @@ class JournalingObjectStore : public ObjectStore {
     opeIdType GetOpeId(const WOPE& wope);
     //@follow definition of ROPE
     opeIdType GetOpeId(const ROPE& rope);
+    /**
+    * use this to compare with omap.logs to distinguish  unfinished loged-before wope
+    * with logs which create after boot-time
+    */
+    chrono::system_clock::rep boot_time;
+    void RePlay();
   public:
     JournalingObjectStore()
         : ObjectStore(), journalPath(), callbacks(), cur_callbackIndex(0),
-          callback_workers(0) {}
+          callback_workers(0), boot_time(chrono::system_clock::now().time_since_epoch().count()) {}
     ~JournalingObjectStore() { UnMount(); }
     bool Mount(Context* ctx);
     void UnMount();

@@ -354,7 +354,8 @@ inline T from_buffer(buffer& buf) {
 }
 template<typename T>
 inline T from_string(string str) {
-	return from_buffer<T>(buffer(move(str)));
+    auto b = buffer(move(str));
+    return from_buffer<T>(b);
 }
 
 

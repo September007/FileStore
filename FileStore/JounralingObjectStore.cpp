@@ -68,6 +68,11 @@ void JournalingObjectStore::Submit_wope(WOPE wope, CallBackType when_log_done,
     RegisterCallback(log_done, move(when_log_done));
     RegisterCallback(journal_done, move(when_journal_done));
     RegisterCallback(flush_done, move(when_flush_done));
+
+    //@wope phase.1 create log
+    omap.Write_Meta<opeIdType, WOPE>(GetOpeId(wope), wope);
+    SubmitCallbacks(log_done);
+
     callback_workers.enqueue(
         [wope = move(wope), pthis = this, log_done, journal_done, flush_done] {
             pthis->do_wope(wope, log_done, journal_done, flush_done);
@@ -99,10 +104,8 @@ void JournalingObjectStore::WithDraw_wope(WOPE wope,
 void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
                                     CallBackIndex when_journal_done,
                                     CallBackIndex when_flush_done) {
-    //@wope phase.1 log
-    // todo
-    omap.Write_Meta<opeIdType, WOPE>(GetOpeId(wope), wope);
-    SubmitCallbacks(when_log_done);
+    //wope phase.1 is create log ,which is done inside Submit_wope()
+    
     //@wope phase.2 write journal
     /**
      * 1. read referedblock data from omap
@@ -198,6 +201,17 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
         }
     }
     SubmitCallbacks(when_flush_done);
+    // phase 4 delete relative log in the omap
+    { /**
+      *  1. get opeid 
+      *  2. remove tail time_stamp
+      *  3. delete relative omap log by prefix, which contain ${wope_log_head}+gh+new_gh,check detail in GetOpeId()
+      */
+        auto opeid = GetOpeId(wope);
+        auto p_time_stamp = opeid.find_last_of(":");
+        auto opeid_with_no_timestamp = opeid.substr(0, p_time_stamp);
+        omap.EraseMatchPrefix(opeid_with_no_timestamp);
+    }
 }
 
 ROPE_Result JournalingObjectStore::do_rope(ROPE rope,
@@ -235,6 +249,7 @@ void JournalingObjectStore::do_withdraw_wope(WOPE wope,
     omap.Erase_Meta<GHObject_t>(new_gh);
     SubmitCallbacks(when_withdraw_done);
 }
+
 opeIdType JournalingObjectStore::GetOpeId(const WOPE& wope) {
     // add time_stamp
     auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
@@ -242,9 +257,59 @@ opeIdType JournalingObjectStore::GetOpeId(const WOPE& wope) {
                        GetObjUniqueStrDesc(wope.ghobj),
                        GetObjUniqueStrDesc(wope.new_ghobj), time_stamp);
 }
+
 opeIdType JournalingObjectStore::GetOpeId(const ROPE& rope) {
     // add time_stamp
     auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
     return fmt::format("{}{}:{}", ctx->wope_log_head,
                        GetObjUniqueStrDesc(rope.ghobj), time_stamp);
+}
+
+void JournalingObjectStore::RePlay() {
+
+    /**
+     *  1. read logs from omap
+     *  2. filter unfinished logs by recorded time_point
+     *  3. reload each ope
+     */
+    // 1
+    auto undone_wopes = omap.GetMatchPrefix(ctx->wope_log_head);
+    // 2
+    vector<WOPE> wopes;
+    wopes.reserve(undone_wopes.size());
+    for (auto& log : undone_wopes) {
+        auto key    = log.first;
+        auto p_date = key.find_last_of(":");
+        if (p_date == string::npos)
+            continue;
+        chrono::system_clock::rep log_date = stoll(key.substr(p_date + 1));
+        // check date
+        if (log_date < this->boot_time) {
+            auto wope = from_string<WOPE>(log.second);
+            wopes.push_back(move(wope));
+        }
+    }
+    // 3
+    // todo : how do we deal with the callbacks?
+    for (auto& wope : wopes) {
+        this->callback_workers.enqueue([wope = move(wope), pthis = this] {
+            auto when_log_done_idx     = pthis->GetNewCallBackIndex();
+            auto when_journal_done_idx = pthis->GetNewCallBackIndex();
+            auto when_flush_done_idx   = pthis->GetNewCallBackIndex();
+            pthis->RegisterCallback(
+                when_log_done_idx, [pthis = pthis, &wope] {
+                pthis->ctx->replay_default_callback_when_log_done(wope);
+            });
+            pthis->RegisterCallback(
+                when_journal_done_idx, [pthis = pthis, &wope] {
+                pthis->ctx->replay_default_callback_when_journal_done(wope);
+            });
+            pthis->RegisterCallback(
+                when_flush_done_idx, [pthis = pthis, &wope] {
+                pthis->ctx->replay_default_callback_when_flush_done(wope);
+            });
+            pthis->do_wope(wope, when_log_done_idx, when_journal_done_idx,
+                           when_flush_done_idx);
+        });
+    }
 }

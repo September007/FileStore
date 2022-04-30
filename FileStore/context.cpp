@@ -6,7 +6,10 @@ Context::Context() {
     // set by default, change in load
     m_WriteFile                  = ::stdio_WriteFile;
     m_ReadFile                   = ::stdio_ReadFile;
-    m_GetReferedBlockStoragePath = ::GetReferedBlockStoragePath_deep2;
+    m_GetReferedBlockStoragePath          = ::GetReferedBlockStoragePath_deep2;
+    replay_default_callback_when_log_done = [](const WOPE& wope) {};
+    replay_default_callback_when_journal_done = [](const WOPE& wope) {};
+    replay_default_callback_when_flush_done = [](const WOPE& wope) {};
 }
 bool Context::load(string name) {
     json config;

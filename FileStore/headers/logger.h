@@ -1,6 +1,9 @@
 #pragma once 
 #include<fmt/format.h>
 #include<memory>
+#include<spdlog/spdlog.h>
+#include<spdlog/sinks/basic_file_sink.h>
+#include<filesystem>
 using std::shared_ptr;
 using std::string;
 using fmt::format;

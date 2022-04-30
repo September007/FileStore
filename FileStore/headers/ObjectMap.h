@@ -19,14 +19,16 @@ class ObjectMap {
     virtual rocksdb::Status Write_Meta(const string& key, const string& value);
     virtual rocksdb::Status Read_Meta(const string& key, string& value);
     virtual rocksdb::Status Erase_Meta(const string& key);
+    virtual vector<pair<string, string>> GetMatchPrefix(const string& prefix);
+    virtual rocksdb::Status EraseMatchPrefix(const string& prefix);
     template <TableType T>
     void Write_Meta(T& t);
     template <TableType T>
     T Read_Meta(const TableKeyType<T>& key);
     template <TableType T>
     T Read_Meta(const T& key);
-    //template <typename T>
-    //void Erase_Meta(const TableKeyType<T>& key);
+    // template <typename T>
+    // void Erase_Meta(const TableKeyType<T>& key);
     template <typename T>
     void Erase_Meta(const T& key);
 
@@ -46,6 +48,9 @@ class ObjectMap {
     }
 
     virtual rocksdb::DB* GetDB() { return nullptr; }
+
+    private:
+    bool beginWith(const string& pre, const string& str);
 };
 
 template <TableType T>
@@ -70,10 +75,10 @@ T ObjectMap::Read_Meta(const T& key) {
     auto keyk = GetKey(key);
     return Read_Meta<T>(keyk);
 }
-//template <typename T>
-//inline void ObjectMap::Erase_Meta(const TableKeyType<T>& key) {
-//    Erase_Meta(as_string(key));
-//}
+// template <typename T>
+// inline void ObjectMap::Erase_Meta(const TableKeyType<T>& key) {
+//     Erase_Meta(as_string(key));
+// }
 template <typename T>
 inline void ObjectMap::Erase_Meta(const T& key) {
     Erase_Meta(as_string(key));
