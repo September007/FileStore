@@ -120,6 +120,9 @@ inline void _MachineState<T>::run() {
 	}
 }
 
+/**
+ * @brief this is concurency timer, name so because its timer task will be concurrent exexute in a list-scan
+ */
 class ConcTimerCaller :public TimerCaller {
 public:
 	template<typename ...args>

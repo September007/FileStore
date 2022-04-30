@@ -25,17 +25,3 @@ BENCHMARK(write50_obj_of_block__cnt_len)
 // clang-format on
 BENCHMARK_MAIN();
 
-//void someLongFunction(int i, double d);
-
-int a = 1;
-int somelongname = 2;
-double c = 3;
-class X {
-    int aaaa : 1;
-    int b : 12;
-    int ccc : 8;
-};
-
-int aaaa = 12;
-float b = 23;
-std::string ccc;

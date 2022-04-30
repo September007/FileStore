@@ -250,6 +250,10 @@ void JournalingObjectStore::do_withdraw_wope(WOPE wope,
     SubmitCallbacks(when_withdraw_done);
 }
 
+/**
+* the last part of opeid should be the time_stamp of chrono::system_clock::rep
+* which is used by replay to distinguish something ,see comcrete implemntation to RePlay()
+*/
 opeIdType JournalingObjectStore::GetOpeId(const WOPE& wope) {
     // add time_stamp
     auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
