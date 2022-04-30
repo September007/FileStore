@@ -62,9 +62,9 @@ void JournalingObjectStore::Modify(const GHObject_t& ghobj,
 void JournalingObjectStore::Submit_wope(WOPE wope, CallBackType when_log_done,
                                         CallBackType when_journal_done,
                                         CallBackType when_flush_done) {
-    auto log_done = GetNewCallBackIndex();
+    auto log_done     = GetNewCallBackIndex();
     auto journal_done = GetNewCallBackIndex();
-    auto flush_done = GetNewCallBackIndex();
+    auto flush_done   = GetNewCallBackIndex();
     RegisterCallback(log_done, move(when_log_done));
     RegisterCallback(journal_done, move(when_journal_done));
     RegisterCallback(flush_done, move(when_flush_done));
@@ -100,6 +100,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
                                     CallBackIndex when_journal_done,
                                     CallBackIndex when_flush_done) {
     //@wope phase.1 log
+    // todo
     omap.Write_Meta<opeIdType, WOPE>(GetOpeId(wope), wope);
     SubmitCallbacks(when_log_done);
     //@wope phase.2 write journal
@@ -115,10 +116,10 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
     // phase2.1
     auto orb = omap.Read_Meta<GHObject_t, ObjectWithRB>(wope.ghobj);
     for (int i = 0; i < wope.block_nums.size(); ++i) {
-        auto block_num = wope.block_nums[i];
+        auto block_num   = wope.block_nums[i];
         auto& block_data = wope.block_datas[i];
-        auto opetype = wope.types[i];
-        auto p = orb.serials_list.begin();
+        auto opetype     = wope.types[i];
+        auto p           = orb.serials_list.begin();
         for (int k = 0; k < block_num; ++k)
             p++;
         // phase2.2
@@ -155,7 +156,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
     //@dataflow kv rb update refer_count
     for (auto& rbs : orb.serials_list) {
         auto rrb = ReferedBlock(rbs);
-        auto rb = omap.Read_Meta<ReferedBlock>(rrb);
+        auto rb  = omap.Read_Meta<ReferedBlock>(rrb);
         rb.refer_count++;
         omap.Write_Meta<ReferedBlock>(rb);
         //{
@@ -178,7 +179,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
         auto rb = omap.Read_Meta<ReferedBlock>(ReferedBlock(rbs));
         if (rb.refer_count == 1) {
             // mean new block
-            auto to_path = GetReferedBlockStoragePath(rb, this->fspath);
+            auto to_path   = GetReferedBlockStoragePath(rb, this->fspath);
             auto from_path = GetReferedBlockStoragePath(rb, this->journalPath);
             auto to_path_parent_dir = GetParentDir(to_path);
             try {
@@ -218,14 +219,14 @@ ROPE_Result JournalingObjectStore::do_rope(ROPE rope,
 void JournalingObjectStore::do_withdraw_wope(WOPE wope,
                                              CallBackIndex when_withdraw_done) {
     /**
-    *  1. get original gh and new_gh
-    *  2. query new_gh info from omap
-    *  3. for each refer block set reference--
-    *  4. remove object record in omap
-    */
+     *  1. get original gh and new_gh
+     *  2. query new_gh info from omap
+     *  3. for each refer block set reference--
+     *  4. remove object record in omap
+     */
     auto &gh = wope.ghobj, &new_gh = wope.new_ghobj;
     auto new_gh_attr = omap.Read_Meta<GHObject_t, ObjectWithRB>(new_gh);
-    
+
     for (auto& rb_serial : new_gh_attr.serials_list) {
         auto rb = omap.Read_Meta<ReferedBlock>(rb_serial);
         rb.refer_count--;
@@ -233,4 +234,17 @@ void JournalingObjectStore::do_withdraw_wope(WOPE wope,
     }
     omap.Erase_Meta<GHObject_t>(new_gh);
     SubmitCallbacks(when_withdraw_done);
+}
+opeIdType JournalingObjectStore::GetOpeId(const WOPE& wope) {
+    // add time_stamp
+    auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
+    return fmt::format("{}{}:{}:{}", ctx->wope_log_head,
+                       GetObjUniqueStrDesc(wope.ghobj),
+                       GetObjUniqueStrDesc(wope.new_ghobj), time_stamp);
+}
+opeIdType JournalingObjectStore::GetOpeId(const ROPE& rope) {
+    // add time_stamp
+    auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
+    return fmt::format("{}{}:{}", ctx->wope_log_head,
+                       GetObjUniqueStrDesc(rope.ghobj), time_stamp);
 }

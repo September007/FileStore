@@ -1,9 +1,9 @@
 {
   "config": {
-    "fsPath": "G:/FileStore/fs",
-    "journalPath": "G:/FileStore/journalPath",
-    "kvPath": "G:/FileStore/kv",
-    "rbPath": "G:/FileStore/rb",
+    "fsPath": "./fs",
+    "journalPath": "./journalPath",
+    "kvPath": "./kv",
+    "rbPath": "./rb",
 
     "journal_callback_worker_count": 8,
     "journal_write_worker_count": 8,

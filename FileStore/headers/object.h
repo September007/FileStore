@@ -247,18 +247,6 @@ public:
 //	auto GetKey() { return make_tuple(&opeId); }
 //	using Attr_Type = ROpeLog;
 //};
-//@follow definition of WOPE
-inline opeIdType GetOpeId(const WOPE& wope) {
-	//add time_stamp
-	auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
-	return fmt::format("{}:{}:{}", GetObjUniqueStrDesc(wope.ghobj), GetObjUniqueStrDesc(wope.new_ghobj), time_stamp);
-}
-//@follow definition of ROPE
-inline opeIdType GetOpeId(const ROPE& rope) {
-	//add time_stamp
-	auto time_stamp = chrono::system_clock::now().time_since_epoch().count();
-	return fmt::format("{}:{}", GetObjUniqueStrDesc(rope.ghobj), time_stamp);
-}
 
 //table support
 class WOPE_TABLE {

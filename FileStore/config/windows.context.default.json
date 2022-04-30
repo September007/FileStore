@@ -9,6 +9,9 @@
     "journal_write_worker_count": 8,
     "default_block_size": 4194304,
 
+    "wope_log_head": "rope_log::",
+    "rope_log_head": "wope_log::",
+
     "traits": {
       "using_epoll": true,
       "using_iocp": true
