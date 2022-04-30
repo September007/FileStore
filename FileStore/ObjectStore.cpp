@@ -5,7 +5,8 @@
 
 using namespace std;
 
-
-ObjectStore* ObjectStore::create(const string& type, const string& path, const string& journal_path, const string& kv_path) {
+ObjectStore* ObjectStore::create(
+	const string& type, const string& path, const string& journal_path, const string& kv_path)
+{
 	return nullptr;
 }

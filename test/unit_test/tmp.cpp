@@ -1,8 +1,9 @@
-#include<test_head.h>
-#include<FileStore.h>
-#include<config.h>
+#include <FileStore.h>
+#include <config.h>
+#include <test_head.h>
 #define head TMP
-TEST(head, config) {
+TEST(head, config)
+{
 	EXPECT_EQ(GetConfig("test", "val1").get<string>(), "integrated.default-1");
 	EXPECT_EQ(GetConfig("test", "val2").get<string>(), "integrated-2");
 	EXPECT_EQ(GetConfig("test", "val3").get<string>(), "test.default-3");
@@ -10,7 +11,8 @@ TEST(head, config) {
 	EXPECT_EQ(GetConfig("test", "val5").get<string>(), "test-5");
 	EXPECT_EQ(GetConfig("test", "val6").empty(), true);
 }
-TEST(head,use_lib) {
+TEST(head, use_lib)
+{
 	vector<int> vi;
 
 	auto tries = 10000, ts = 50;

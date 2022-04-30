@@ -1,65 +1,67 @@
 #pragma once
 #ifndef GD_CONFIG_HEAD
 #define GD_CONFIG_HEAD
-#include<nlohmann/json.hpp>
-#include<assistant_utility.h>
-#include<context_methods.h>
-#include<map>
-using nlohmann::json;
+#include <assistant_utility.h>
+#include <context_methods.h>
+#include <map>
+#include <nlohmann/json.hpp>
 using fmt::format;
+using nlohmann::json;
 
-inline json GetConfigFromFile(const string &filename, const vector<string>& rootpaths) {
+inline json GetConfigFromFile(const string& filename, const vector<string>& rootpaths)
+{
 	json ret;
 	try {
 		for (auto& root : rootpaths) {
 			auto path = format("{}/{}", root, filename);
 			if (filesystem::is_regular_file(path)) {
 				auto f = stdio_ReadFile(path);
-				ret = json::parse(f);
+				ret	   = json::parse(f);
 				break;
 			}
 		}
-	}
-	catch (std::exception& e) {
-		LOG_INFO("IO", fmt::format("read config file [{}]catch exception[{}]", as_string(rootpaths), e.what()));
+	} catch (std::exception& e) {
+		LOG_INFO("IO",
+			fmt::format(
+				"read config file [{}]catch exception[{}]", as_string(rootpaths), e.what()));
 	}
 	return ret;
 }
 /*
-* need check empty before use
-* integrated.default.json.{name}		first
-* integrated.json.{name}				overload 
-* {name}.default.json.{name}			overload
-* {name}.json.{name}					overload
-* but this overwrite is over simple ,on in the surface of dirct key of  name
-*/
+ * need check empty before use
+ * integrated.default.json.{name}		first
+ * integrated.json.{name}				overload
+ * {name}.default.json.{name}			overload
+ * {name}.json.{name}					overload
+ * but this overwrite is over simple ,on in the surface of dirct key of  name
+ */
 
-inline json GetConfig(const string& name, const string& key, const string& default_class = "", bool reload = false) {
+inline json GetConfig(
+	const string& name, const string& key, const string& default_class = "", bool reload = false)
+{
 	//@FATAL: change root
-	static vector<string> configRoots = {
-	filesystem::absolute("../../../FileStore/config").generic_string(),
-	filesystem::absolute("../../../../FileStore/config").generic_string(),
-	filesystem::absolute("../../../../../FileStore/config").generic_string(),
-	filesystem::absolute("./config").generic_string()
-	};
-	static auto  sid = GetConfigFromFile(fmt::format("integrated.default.json"), configRoots);
-	static auto  si = GetConfigFromFile(fmt::format("integrated.json"), configRoots);
+	static vector<string> configRoots
+		= { filesystem::absolute("../../../FileStore/config").generic_string(),
+			  filesystem::absolute("../../../../FileStore/config").generic_string(),
+			  filesystem::absolute("../../../../../FileStore/config").generic_string(),
+			  filesystem::absolute("./config").generic_string() };
+	static auto sid = GetConfigFromFile(fmt::format("integrated.default.json"), configRoots);
+	static auto si	= GetConfigFromFile(fmt::format("integrated.json"), configRoots);
 	static map<string, json> cache;
-	json ret;//
-	string indexs[] = {
-		format("integrated.default.{}", name),
-		format("integrated.{}", name),
-		format("{}.default", name),
-		format("{}", name)
-	};
+	json					 ret;	//
+	string indexs[] = { format("integrated.default.{}", name), format("integrated.{}", name),
+		format("{}.default", name), format("{}", name) };
 	if (cache[format("integrated.default.{}", name)].empty() || reload) {
-		cache[format("integrated.default.{}", name)] = GetConfigFromFile("integrated.default.json", configRoots)[name];
+		cache[format("integrated.default.{}", name)]
+			= GetConfigFromFile("integrated.default.json", configRoots)[name];
 	}
 	if (cache[format("integrated.{}", name)].empty() || reload) {
-		cache[format("integrated.{}", name)] = GetConfigFromFile("integrated.json", configRoots)[name];
+		cache[format("integrated.{}", name)]
+			= GetConfigFromFile("integrated.json", configRoots)[name];
 	}
 	if (cache[format("{}.default", name)].empty() || reload) {
-		cache[format("{}.default", name)] = GetConfigFromFile(format("{}.default.json", name), configRoots);
+		cache[format("{}.default", name)]
+			= GetConfigFromFile(format("{}.default.json", name), configRoots);
 	}
 	if (cache[format("{}", name)].empty() || reload) {
 		cache[format("{}", name)] = GetConfigFromFile(format("{}.json", name), configRoots);
@@ -69,38 +71,45 @@ inline json GetConfig(const string& name, const string& key, const string& defau
 		if (!(cache[index])[key].empty()/*id.find(name) != id.end() && id.find(name)->find(key) != id.find(name)->end()*/) {
 			ret = (cache[index])[key];
 		}
-	//read default_class
+	// read default_class
 	if (ret.empty()) {
-		LOG_WARN("config", fmt::format("get [{}:{}],default:[{}] failed,may try default", name, key, default_class)
-		,true);
+		LOG_WARN("config",
+			fmt::format(
+				"get [{}:{}],default:[{}] failed,may try default", name, key, default_class),
+			true);
 		if (default_class != "") {
 			ret = GetConfig(default_class, key, "", reload);
 			if (ret.empty()) {
-				LOG_WARN("config", fmt::format("get [{}:{}],default:[{}] failed,try default failed too",
-					name, key, default_class), true);
+				LOG_WARN("config",
+					fmt::format("get [{}:{}],default:[{}] failed,try default failed too", name, key,
+						default_class),
+					true);
 			}
 		}
 	}
 	return ret;
 }
 // use this replace directly GetConfig
-template<typename T>
-inline T GetconfigOverWrite(T default_value, const string& default_class, const string& name, const string& key, bool reload = false) {
+template <typename T>
+inline T GetconfigOverWrite(T default_value, const string& default_class, const string& name,
+	const string& key, bool reload = false)
+{
 	auto r = GetConfig(name, key, default_class, reload);
 	if (r.empty()) {
-		LOG_ERROR("config", fmt::format("can't read the [{}:{}:{}] ,use default {}, but this is not allowd in realtime",
-			default_class, name, key, default_value));
+		LOG_ERROR("config",
+			fmt::format(
+				"can't read the [{}:{}:{}] ,use default {}, but this is not allowd in realtime",
+				default_class, name, key, default_value));
 		return default_value;
-	}
-	else {
+	} else {
 		try {
 			return r.get<T>();
-		}
-		catch (std::exception& e) {
-			LOG_ERROR("config", fmt::format("catch error[{}],when getconfig of [{}:{}:{}]",
-				e.what(), default_class, name, key));
+		} catch (std::exception& e) {
+			LOG_ERROR("config",
+				fmt::format("catch error[{}],when getconfig of [{}:{}:{}]", e.what(), default_class,
+					name, key));
 			return default_value;
 		}
 	}
 }
-#endif //GD_CONFIG_HEAD
+#endif	 // GD_CONFIG_HEAD

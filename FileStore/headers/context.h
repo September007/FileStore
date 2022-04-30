@@ -67,7 +67,7 @@ public:
 	/**
 	 * whether using epoll or iocp ,for this filestore, which give up these feature,
 	 * this maybe useful when add osd socket listening.
-	 * \todo clear 
+	 * \todo clear
 	 */
 	bool using_io_acc = false;
 };

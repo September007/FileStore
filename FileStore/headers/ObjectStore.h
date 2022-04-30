@@ -117,5 +117,7 @@ public:
 	/**
 	 * erase [modi_start,modistart+len) , and insert data at mmodi_start
 	 */
-	virtual void Modify(const GHObject_t& ghobj, int modifiedArea_start, int len, const string& data) = 0;
+	virtual void Modify(
+		const GHObject_t& ghobj, int modifiedArea_start, int len, const string& data)
+		= 0;
 };

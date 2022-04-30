@@ -11,4 +11,3 @@ target_link_libraries(FileStore ${dependencies} )
 target_include_directories(FileStore PUBLIC ${filestore_header_dir})
 add_library(FileStore::FileStore ALIAS FileStore)
 
-

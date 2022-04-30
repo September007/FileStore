@@ -45,7 +45,8 @@ bool Context::load(string name)
 		}
 		return true;
 	} catch (std::exception& e) {
-		LOG_ERROR("context", format("context load from [{}] failed,catch error[{}]", name, e.what()));
+		LOG_ERROR(
+			"context", format("context load from [{}] failed,catch error[{}]", name, e.what()));
 		return false;
 	}
 }

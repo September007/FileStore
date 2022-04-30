@@ -1,7 +1,8 @@
-#include<bench_test_head.hpp>
+#include <bench_test_head.hpp>
 
 auto wopes = create_test_WOPES(100);
-void rb_deep_2(State& state) {
+void rb_deep_2(State& state)
+{
 	Context ctx;
 	ctx.load("");
 
@@ -11,7 +12,8 @@ void rb_deep_2(State& state) {
 		Run_FileStore_Write(ctx, wopes);
 }
 
-void rb_deep_4(State& state) {
+void rb_deep_4(State& state)
+{
 	Context ctx;
 	ctx.load("");
 

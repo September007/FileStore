@@ -1,12 +1,14 @@
-#include<benchmark\benchmark.h>
+#include <benchmark\benchmark.h>
 using namespace benchmark;
-void t(State& state) {
+void t(State& state)
+{
 	int i = 1;
 	for (auto _ : state) {
 		i *= 3;
 	}
 }
-void t1(State& state) {
+void t1(State& state)
+{
 	int i = 1;
 	for (auto _ : state) {
 		i *= 2;
@@ -15,10 +17,12 @@ void t1(State& state) {
 BENCHMARK(t);
 BENCHMARK(t1);
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
 	::benchmark::Initialize(&argc, argv);
-	if (::benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+	if (::benchmark::ReportUnrecognizedArguments(argc, argv))
+		return 1;
 	::benchmark::RunSpecifiedBenchmarks();
 	::benchmark::Shutdown();
 	return 0;

@@ -18,4 +18,3 @@ foreach(test ${benchmark_sources})
         set_target_properties(${TestName} PROPERTIES LINK_FLAGS "/PROFILE")
     endif()
 endforeach()
-

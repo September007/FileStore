@@ -1,105 +1,117 @@
-#pragma once 
-#include<functional>
-#include<thread>
-#include<vector>
-#include<queue>
-#include<future>
-#include<assistant_utility.h>
+#pragma once
+#include <assistant_utility.h>
+#include <functional>
+#include <future>
+#include <queue>
+#include <thread>
+#include <vector>
 using TaskType = std::function<void()>;
-using std::vector;
-using std::thread;
 using std::queue;
+using std::thread;
+using std::vector;
 
 namespace GD {
 
-    class ThreadPool {
-    public:
-        explicit ThreadPool(size_t n) : shutdown_(false) {
-            active(n);
-        }
+class ThreadPool {
+public:
+	explicit ThreadPool(size_t n)
+		: shutdown_(false)
+	{
+		active(n);
+	}
 
-        ThreadPool(const ThreadPool&) = delete;
-        ~ThreadPool() { shutdown(); };
+	ThreadPool(const ThreadPool&) = delete;
+	~ThreadPool() { shutdown(); };
 
-        void active(size_t n) {
-            shutdown();
-            unique_lock lg(mutex_);
-            shutdown_ = false;
-            while (n) {
-                threads_.emplace_back(worker(*this));
-                n--;
-            }
-        }
+	void active(size_t n)
+	{
+		shutdown();
+		unique_lock lg(mutex_);
+		shutdown_ = false;
+		while (n) {
+			threads_.emplace_back(worker(*this));
+			n--;
+		}
+	}
 
-        void enqueue(std::function<void()> fn) {
-            std::unique_lock<std::mutex> lock(mutex_);
-            jobs_.push_back(std::move(fn));
-            cond_.notify_one();
-        }
+	void enqueue(std::function<void()> fn)
+	{
+		std::unique_lock<std::mutex> lock(mutex_);
+		jobs_.push_back(std::move(fn));
+		cond_.notify_one();
+	}
 
-        void shutdown() {
-            //shut down once at a circle
-            if (shutdown_)
-                return;
-            // Stop all worker threads...
-            {
-                std::unique_lock<std::mutex> lock(mutex_);
-                shutdown_ = true;
-            }
+	void shutdown()
+	{
+		// shut down once at a circle
+		if (shutdown_)
+			return;
+		// Stop all worker threads...
+		{
+			std::unique_lock<std::mutex> lock(mutex_);
+			shutdown_ = true;
+		}
 
-            cond_.notify_all();
+		cond_.notify_all();
 
-            // Join...
-            for (auto& t : threads_) {
-                t.join();
-            }
-            {
-                std::unique_lock<std::mutex> lock(mutex_);
-                threads_.clear();
-            }
-        }
+		// Join...
+		for (auto& t : threads_) {
+			t.join();
+		}
+		{
+			std::unique_lock<std::mutex> lock(mutex_);
+			threads_.clear();
+		}
+	}
 
-        int workerRunning() {
-            lock_guard lg(mutex_);
-            return busyCount.load() + jobs_.size();
-        }
-    private:
-        struct worker {
-            explicit worker(ThreadPool& pool) : pool_(pool) {}
+	int workerRunning()
+	{
+		lock_guard lg(mutex_);
+		return busyCount.load() + jobs_.size();
+	}
 
-            void operator()() {
-                for (;;) {
-                    std::function<void()> fn;
-                    {
-                        std::unique_lock<std::mutex> lock(pool_.mutex_);
+private:
+	struct worker {
+		explicit worker(ThreadPool& pool)
+			: pool_(pool)
+		{
+		}
 
-                        pool_.cond_.wait(
-                            lock, [&] { return !pool_.jobs_.empty() || pool_.shutdown_; });
+		void operator()()
+		{
+			for (;;) {
+				std::function<void()> fn;
+				{
+					std::unique_lock<std::mutex> lock(pool_.mutex_);
 
-                        if (pool_.shutdown_ && pool_.jobs_.empty()) { break; }
-                        pool_.busyCount++;
-                        fn = pool_.jobs_.front();
-                        pool_.jobs_.pop_front();
-                    }
-                    LOG_EXPECT_TRUE("ThreadPool",fn != nullptr);
-                    fn();
-                    pool_.busyCount--;
-                }
-            }
+					pool_.cond_.wait(lock, [&] { return !pool_.jobs_.empty() || pool_.shutdown_; });
 
-            ThreadPool& pool_;
-        };
-        friend struct worker;
+					if (pool_.shutdown_ && pool_.jobs_.empty()) {
+						break;
+					}
+					pool_.busyCount++;
+					fn = pool_.jobs_.front();
+					pool_.jobs_.pop_front();
+				}
+				LOG_EXPECT_TRUE("ThreadPool", fn != nullptr);
+				fn();
+				pool_.busyCount--;
+			}
+		}
 
-        std::vector<std::thread> threads_;
-        std::list<std::function<void()>> jobs_;
+		ThreadPool& pool_;
+	};
+	friend struct worker;
 
-        bool shutdown_;
+	std::vector<std::thread>		 threads_;
+	std::list<std::function<void()>> jobs_;
 
-        std::condition_variable cond_;
-        std::mutex mutex_;
-        //record busy thread
-        atomic_int busyCount = 0;
-    };
+	bool shutdown_;
+
+	std::condition_variable cond_;
+	std::mutex				mutex_;
+	// record busy thread
+	atomic_int busyCount = 0;
+};
 
 }

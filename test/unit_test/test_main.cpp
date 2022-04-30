@@ -1,9 +1,10 @@
-#include<test_head.h>
-#include<gtest/gtest.h>
-#include<iostream>
-#include<stdlib.h>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <stdlib.h>
+#include <test_head.h>
 
-int main() {
+int main()
+{
 #ifdef __SANITIZE_ADDRESS__
 	printf("Address sanitizer enabled\n");
 #else
