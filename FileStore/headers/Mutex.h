@@ -3,7 +3,8 @@
 #define GD_MUTEX_HEAD
 #include <map>
 #include <mutex>
-
+using std::lock_guard;
+using std::mutex;
 enum class mutex_enum {
 	// for x
 	header_lock,

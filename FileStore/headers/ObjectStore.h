@@ -56,7 +56,7 @@ protected:
 		rb.refer_count = 0;
 		auto rbPath	   = GetReferedBlockStoragePath(rb, root_path);
 		// ctx->m_WriteFile(rbPath, data, true);
-		StoreInterface::RecordData(rbPath, data);
+		RecordData(rbPath, data);
 		LOG_INFO("rb_log",
 			fmt::format("add new rb[{} ref:{} ,path:{}]", rb.serial, rb.refer_count,
 				GetReferedBlockStoragePath(rb, root_path)));
@@ -66,7 +66,7 @@ protected:
 	{
 		auto path = GetReferedBlockStoragePath(serial, root_path);
 		// return ctx->m_ReadFile(path);
-		return StoreInterface::ReadData(path);
+		return ReadData(path);
 	}
 	inline string ReadObjectWithRB(ObjectWithRB orb, string root_path)
 	{
@@ -80,7 +80,7 @@ protected:
 	{
 		auto path = GetReferedBlockStoragePath(rb, root_path);
 		// ctx->m_WriteFile(path, data, true);
-		StoreInterface::RecordData(path, data);
+		RecordData(path, data);
 	}
 	inline string GetReferedBlockStoragePath(const ReferedBlock& rb, string root_path)
 	{
