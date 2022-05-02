@@ -46,14 +46,14 @@ void JournalingObjectStore::SubmitCallbacks(CallBackIndex idx)
 
 bool JournalingObjectStore::Mount(Context* ctx)
 {
-	journalPath = ctx->journalPath;
+	journalpath = ctx->journalpath;
 	callback_workers.active(ctx->journal_callback_worker_count);
 
 	return omap.Mount(ctx) && ObjectStore::Mount(ctx);
 }
 
 void JournalingObjectStore::UnMount() { ObjectStore::UnMount(); }
-// todo: object storage support
+
 void JournalingObjectStore::Write(const GHObject_t& ghobj, const string& data) {}
 
 string JournalingObjectStore::Read(const GHObject_t& ghobj) { return string(); }
@@ -93,22 +93,21 @@ void JournalingObjectStore::Submit_rope(
 	});
 }
 
-void JournalingObjectStore::WithDraw_wope(WOPE wope, CallBackType when_withdraw_donw)
+void JournalingObjectStore::WithDraw_wope(WOPE wope, CallBackType when_withdraw_done)
 {
-	auto idx_when_withdraw_donw = GetNewCallBackIndex();
-	RegisterCallback(idx_when_withdraw_donw, when_withdraw_donw);
-	this->callback_workers.enqueue([wope = move(wope), pthis = this, idx_when_withdraw_donw] {
-		pthis->do_withdraw_wope(wope, idx_when_withdraw_donw);
+	auto idx_when_withdraw_done = GetNewCallBackIndex();
+	RegisterCallback(idx_when_withdraw_done, when_withdraw_done);
+	this->callback_workers.enqueue([wope = move(wope), pthis = this, idx_when_withdraw_done] {
+		pthis->do_withdraw_wope(wope, idx_when_withdraw_done);
 	});
 }
 
 void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 	CallBackIndex when_journal_done, CallBackIndex when_flush_done)
 {
-	// wope phase.1 is create log ,which is done inside Submit_wope()
+	/**  wope phase.1 is create log, which is done inside   Submit_wope() */
 
-	//@wope phase.2 write journal
-	/**
+	/** wope phase.2 write journal
 	 * 1. read referedblock data from omap
 	 * 2. do each sub write ope in the list
 	 *		2.1 insert: create new block and insert
@@ -133,24 +132,14 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		} break;
 		case WOPE::opetype::Insert: {
 			//@dataflow kv rb create
-			auto newRb = BlockStore::addNewReferedBlock(block_data, this->journalPath);
+			auto newRb = BlockStore::addNewReferedBlock(block_data, this->journalpath);
 			orb.serials_list.insert(p, newRb.serial);
 			omap.Write_Meta<ReferedBlock>(newRb);
-			//{
-			//	auto rb_attr = kv->GetAttr(newRb);
-			//	LOG_INFO("rb_log", fmt::format("create new rb[{} ref: {}]",
-			//		rb_attr.first.serial, rb_attr.first.refer_count));
-			//}
 		} break;
 		case WOPE::opetype::OverWrite: {
-			auto newRb = BlockStore::addNewReferedBlock(block_data, this->journalPath);
+			auto newRb = BlockStore::addNewReferedBlock(block_data, this->journalpath);
 			*p		   = newRb.serial;
 			omap.Write_Meta<ReferedBlock>(newRb);
-			//{
-			//	auto rb_attr = kv->GetAttr(newRb);
-			//	LOG_INFO("rb_log", fmt::format("create new rb[{} ref: {}]",
-			//		rb_attr.first.serial, rb_attr.first.refer_count));
-			//}
 		} break;
 		}
 	}
@@ -161,37 +150,21 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		auto rb	 = omap.Read_Meta<ReferedBlock>(rrb);
 		rb.refer_count++;
 		omap.Write_Meta<ReferedBlock>(rb);
-		//{
-		//	auto rb_attr_new = kv->GetAttr(rrb);
-		//	LOG_INFO("rb_log",
-		//		fmt::format("journal set rb[{} ref_count={}]
-		// ref_count++,now rb.ref_count={}",
-		// rrb.serial,rrb.refer_count, rb_attr_new.first.refer_count));
-		//}
 	}
 	//@wope phase2.4 register new gh
 	//@dataflow kv gh create gh:orb
 	omap.Write_Meta<GHObject_t, ObjectWithRB>(wope.new_ghobj, orb);
 	SubmitCallbacks(when_journal_done);
-	//@wope phase.3 log flush
-	/**
-	 * 1. copy block data to fs path
+	/** wope phase.3 log flush
+	 *   copy block data to fs path
 	 */
 	for (auto rbs : orb.serials_list) {
 		auto rb = omap.Read_Meta<ReferedBlock>(ReferedBlock(rbs));
 		if (rb.refer_count == 1) {
 			// mean new block
 			auto to_path   = GetReferedBlockStoragePath(rb, this->fspath);
-			auto from_path = GetReferedBlockStoragePath(rb, this->journalPath);
-			// auto to_path_parent_dir = GetParentDir(to_path);
+			auto from_path = GetReferedBlockStoragePath(rb, this->journalpath);
 			try {
-				// if (!filesystem::is_regular_file(to_path)) {
-				//	if (!filesystem::is_directory(to_path_parent_dir))
-				//		filesystem::create_directories(to_path_parent_dir);
-				//	filesystem::copy(from_path, to_path_parent_dir,
-				//		filesystem::copy_options::overwrite_existing);
-				//	LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
-				// }
 				CopyData(from_path, to_path);
 				LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
 			} catch (std::exception& e) {
@@ -200,9 +173,8 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		}
 	}
 	SubmitCallbacks(when_flush_done);
-	// phase 4 delete relative log in the omap
 	{
-		/**
+		/** wope phase.4 delete relative log in the omap
 		 *  1. get opeid
 		 *  2. remove tail time_stamp
 		 *  3. delete relative omap log by prefix, which contain ${wope_log_head}+gh+new_gh,check
@@ -235,7 +207,7 @@ void JournalingObjectStore::do_withdraw_wope(WOPE wope, CallBackIndex when_withd
 	 *  1. get original gh and new_gh
 	 *  2. query new_gh info from omap
 	 *  3. for each refer block set reference--
-	 *  4. remove object record in omap
+	 *  4. remove object record (new_gh) in omap
 	 */
 	auto &gh = wope.ghobj, &new_gh = wope.new_ghobj;
 	auto  new_gh_attr = omap.Read_Meta<GHObject_t, ObjectWithRB>(new_gh);
@@ -250,6 +222,7 @@ void JournalingObjectStore::do_withdraw_wope(WOPE wope, CallBackIndex when_withd
 }
 
 /**
+ * @brief create unique key for wope
  * the last part of opeid should be the time_stamp of chrono::system_clock::rep
  * which is used by replay to distinguish something ,see comcrete implemntation to RePlay()
  */
@@ -260,7 +233,10 @@ opeIdType JournalingObjectStore::GetOpeId(const WOPE& wope)
 	return fmt::format("{}{}:{}:{}", ctx->wope_log_head, GetObjUniqueStrDesc(wope.ghobj),
 		GetObjUniqueStrDesc(wope.new_ghobj), time_stamp);
 }
-
+/**
+ * @brief create unique key for rope
+ * this is not requested to binding time_stamp appending in the end like GetOpeId(const WOPE&)
+ */
 opeIdType JournalingObjectStore::GetOpeId(const ROPE& rope)
 {
 	// add time_stamp
@@ -277,7 +253,7 @@ void JournalingObjectStore::RePlay()
 	 *  3. reload each ope
 	 */
 	// 1
-	auto undone_wopes = omap.GetMatchPrefix(ctx->wope_log_head);
+	auto		 undone_wopes = omap.GetMatchPrefix(ctx->wope_log_head);
 	// 2
 	vector<WOPE> wopes;
 	wopes.reserve(undone_wopes.size());
@@ -300,9 +276,16 @@ void JournalingObjectStore::RePlay()
 			auto when_log_done_idx	   = pthis->GetNewCallBackIndex();
 			auto when_journal_done_idx = pthis->GetNewCallBackIndex();
 			auto when_flush_done_idx   = pthis->GetNewCallBackIndex();
-			/// after do_wope() exit after submit callbacks,then fall off this lambda,the stack
-			/// variable like wope would deconstruct,but the callbacks which need wope is not
-			/// promised to be completed,so need make_shared to extend life time of wope
+			/**
+			when reload wope ,we already lost original callback, so we are gonna use default
+			callback specified by Context::replay_default_callback_when_log_done .etc but after
+			do_wope() exit after submit callbacks,then fall off this lambda,the stack variable like
+			wope would deconstruct,but the callbacks which need wope is not promised to be
+			completed,so need make_shared to extend life time of wope
+			code like this `auto shared_wope =
+			make_shared<WOPE>(move(wope));pthis->ctx->replay_default_callback_when_log_done(shared_wope);
+			});`
+			*/
 			auto shared_wope = make_shared<WOPE>(move(wope));
 			pthis->RegisterCallback(when_log_done_idx, [pthis = pthis, shared_wope] {
 				pthis->ctx->replay_default_callback_when_log_done(shared_wope);

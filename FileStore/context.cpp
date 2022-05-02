@@ -23,10 +23,10 @@ bool Context::load(string name)
 	config = GetConfig(name, "config", "linux.context", true);
 #endif
 	try {
-		fsPath		= filesystem::absolute(config["fsPath"].get<string>()).string();
-		journalPath = filesystem::absolute(config["journalPath"].get<string>()).string();
-		kvPath		= filesystem::absolute(config["kvPath"].get<string>()).string();
-		rbPath		= filesystem::absolute(config["rbPath"].get<string>()).string();
+		fspath		= filesystem::absolute(config["fsPath"].get<string>()).string();
+		journalpath = filesystem::absolute(config["journalPath"].get<string>()).string();
+		kvpath		= filesystem::absolute(config["kvPath"].get<string>()).string();
+		rbpath		= filesystem::absolute(config["rbPath"].get<string>()).string();
 
 		journal_callback_worker_count = config["journal_callback_worker_count"].get<int>();
 		journal_write_worker_count	  = config["journal_write_worker_count"].get<int>();

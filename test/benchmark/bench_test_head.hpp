@@ -6,10 +6,10 @@ using namespace benchmark;
 
 inline void remove_ctx_dir(Context& ctx)
 {
-	filesystem::remove_all(ctx.fsPath);
-	filesystem::remove_all(ctx.journalPath);
-	filesystem::remove_all(ctx.kvPath);
-	filesystem::remove_all(ctx.rbPath);
+	filesystem::remove_all(ctx.fspath);
+	filesystem::remove_all(ctx.journalpath);
+	filesystem::remove_all(ctx.kvpath);
+	filesystem::remove_all(ctx.rbpath);
 }
 inline void Run_FileStore_Write(Context ctx, const vector<WOPE>& wopes)
 {

@@ -1,11 +1,18 @@
-﻿// FileStore.h : Include file for standard system include files,
-// or project specific include files.
+﻿/*****************************************************************/
+/**
+ * \file   FileStore.h
+ */
+/*****************************************************************/
 
 #pragma once
 
 #include <JounralingObjectStore.h>
 #include <iostream>
-
+/**
+ * \brief	filesystem implement of StoreInterface .
+ * \author	September007
+ * \date	2022-5-2
+ */
 class FileStore : public JournalingObjectStore {
 
 public:
@@ -18,11 +25,11 @@ public:
 	~FileStore() { UnMount(); }
 
 	/** simply write file. */
-	void RecordData(const string& key, const string& data) override;
+	void   RecordData(const string& key, const string& data) override;
 	/** simply read file.  */
 	string ReadData(const string& key) override;
 	/** simply remove file or dir */
-	void RemoveData(const string& key) override;
+	void   RemoveData(const string& key) override;
 	/** simply copy   file or dir */
-	void CopyData(const string& keyFrom, const string& keyTo) override;
+	void   CopyData(const string& keyFrom, const string& keyTo) override;
 };

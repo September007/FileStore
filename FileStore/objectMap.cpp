@@ -4,11 +4,11 @@ using namespace std;
 
 bool ObjectMap::Mount(Context* context)
 {
-	if (path == context->kvPath && db != nullptr)
+	if (path == context->kvpath && db != nullptr)
 		return true;
 	if (db)
 		UnMount();
-	path = context->kvPath;
+	path = context->kvpath;
 	if (!filesystem::is_directory(path))
 		filesystem::create_directories(path);
 	try {
@@ -66,7 +66,7 @@ rocksdb::Status ObjectMap::EraseMatchPrefix(const string& prefix)
 {
 	rocksdb::Slice start, end;
 	// set start and end
-	auto it = db->NewIterator(ReadOptions());
+	auto		   it = db->NewIterator(ReadOptions());
 
 	for (it->SeekForPrev(prefix); beginWith(prefix, it->key().ToString()); it->Next()) {
 		db->Delete(WriteOptions(), it->key());

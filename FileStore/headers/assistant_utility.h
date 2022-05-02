@@ -1,12 +1,17 @@
-﻿/* this file implement
- * log,formatted time,IO,serialize,
- * @Contract
+﻿
+/*****************************************************************/
+/**
+ * \file   assistant_utility.h
+ * formatted time,IO,serialize,
  *	1.	if specified class is plained(has no pointer memeber like raw pointer or shared_ptr),
  *		you only need achieve the member function GetES() to point out member address,
  *		but if not, you should achieve three more function to do some spcified work
- *		(you still could use GetES() to do with other non-pointer member),check class::Slice see
- *detail; 2.	randomValue,Write,Read do not expect type tuple(lazy)
+ *		(you still could use GetES() to do with other non-pointer member),check class::Slice
+ *		seedetail;
+ *  2.	randomValue,Write,Read do not expect type tuple(lazy)
  */
+/*****************************************************************/
+
 #pragma once
 #pragma warning(disable : 4267)
 #ifndef ASSISTANT_UTILITY_HEAD

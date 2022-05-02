@@ -11,32 +11,26 @@ using std::string;
  */
 class Context {
 public:
-	/** filestore path,  where journal block will be move to when flush some wope and rope will seek
-	 * data from.  */
-	string fsPath;
-	/** journal path,    where journal block will be write. */
-	string journalPath;
-	/** kv path,         where to mount RocksKV.*/
-	string kvPath;
-	/** rb path,         where to store referedblock data in blockstore, this is \deprecated. */
-	string rbPath;
-	/** not used yet */
-	int default_block_size;
-	/** the count of threads of JournalingObjectStore::callback_worker */
-	int journal_callback_worker_count;
-	/** not used yet */
-	int journal_write_worker_count;
+	string fspath; /**< filestore path,		where journal block will be move to when flush some wope
+					* and rope will seek data from. this is \deprecated. in fact ObjectStore::fspath
+					* is reference to BlockStore::rbpath
+					* \sa ObjectStore()
+					*/
+	string journalpath; /**< journal path,	where journal block will be write. */
+	string kvpath;		/**< kv path,		where to mount RocksKV.*/
+	string rbpath;		/**< rb path,		where to store referedblock data in blockstore */
 
-	/**
-	 * this is used by  GetOpeId() to generate opeid then the journalObjectStore can retrieve
-	 * unfinished ope through this head in omap
-	 */
-	string wope_log_head;
-	/**
-	 * rope_log_head will be used to generated opeid but not used yet, because don't see any benefit
-	 * of read operation records yet.
-	 */
-	string rope_log_head;
+	int default_block_size;			   /**< not used yet */
+	int journal_callback_worker_count; /**< the count of threads of
+										  JournalingObjectStore::callback_worker */
+	int journal_write_worker_count;	   /**< not used yet */
+
+	string wope_log_head; /**<	this is used by  GetOpeId() to generate opeid then the
+						journalObjectStore can retrieve unfinished ope through this head in omap*/
+
+	string rope_log_head; /**<	rope_log_head will be used to generated opeid but not used yet,
+						   because don't see any benefit of read operation records yet.
+						 */
 	Context();
 	/**
 	 * @brief according to config file specified by $name, to set up setting.
@@ -46,11 +40,11 @@ public:
 	 * json::parse_error will return false,
 	 * @log context
 	 */
-	bool load(string name);
+	bool														   load(string name);
 	/** method of writefile */
-	std::function<bool(const string&, const string&, const bool)> m_WriteFile;
+	std::function<bool(const string&, const string&, const bool)>  m_WriteFile;
 	/** method of readfile */
-	std::function<string(const string&)> m_ReadFile;
+	std::function<string(const string&)>						   m_ReadFile;
 	/** method of get path od referd block, differs in dirs deep which influence dirs cache reuse */
 	std::function<string(const ReferedBlock& rb, string root_pat)> m_GetReferedBlockStoragePath;
 	/**
@@ -71,3 +65,8 @@ public:
 	 */
 	bool using_io_acc = false;
 };
+
+static int i	   = 0;
+static int idadsad = 0;
+// dadasd
+static int adsad = 0;

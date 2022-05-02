@@ -118,7 +118,7 @@ public:
 	gen_t	   generation;
 	shard_id_t shard_id;
 	//@new point out the owner of this obj
-	string owner = "default-user";
+	string	   owner = "default-user";
 	// these implement is needed
 	GHObject_t(const HObject_t& hobj = HObject_t(), gen_t generation = 0,
 		shard_id_t shard_id = shard_id_t::NO_SHARD())
@@ -200,11 +200,11 @@ public:
 	enum class opetype { Insert, Delete, OverWrite };
 	vector<opetype> types;
 	// for the block support
-	vector<int>	   block_nums;
-	vector<string> block_datas;
-	GHObject_t	   ghobj;
+	vector<int>		block_nums;
+	vector<string>	block_datas;
+	GHObject_t		ghobj;
 	//@new new ghobj of new version
-	GHObject_t new_ghobj;
+	GHObject_t		new_ghobj;
 	WOPE(GHObject_t gh, GHObject_t new_gh, vector<opetype> types, vector<int> block_nums,
 		vector<string> block_datas)
 		: types(types)
@@ -220,7 +220,7 @@ public:
 
 class ROPE {
 public:
-	GHObject_t ghobj;
+	GHObject_t	ghobj;
 	// serial numbers of blocks
 	vector<int> blocks;
 	ROPE(const GHObject_t& gh, const std::vector<int>& blocks)
@@ -233,8 +233,8 @@ public:
 // result of read ope
 class ROPE_Result {
 public:
-	opeIdType  opeId;
-	GHObject_t ghobj;
+	opeIdType	   opeId;
+	GHObject_t	   ghobj;
 	// serial numbers of blocks
 	vector<int>	   blocks;
 	vector<string> datas;
@@ -297,12 +297,22 @@ public:
 	auto	  GetKey() { return make_tuple(&opeId); }
 	auto	  GetAttr() { return make_tuple(&rope); }
 };
-
+/**
+ * @class for refered block.
+ */
 class ReferedBlock {
 public:
-	// get from meta server
-	// as a unique in range of whole storage system
+	/** unique serial number in a range of local filestore
+	 * @note this is not requrested to be unique or sychronous between each filestore, because each
+	 * filestore remember GHObject_t which is reprented as ObjectWithRB which is contain neccessary
+	 * info for sychronous between every filestore, that is ,compare and matching
+	 * ReferedBlock::serial by GHObject_t's ObjectWithRB::serials_list
+	 */
 	int64_t serial;
+	/**
+	 * count of references of GHObject_t.
+	 * @note when refer_count is 0, this object will be delete
+	 */
 	int32_t refer_count;
 	ReferedBlock(int64_t serial = 0, int32_t refer_count = 0)
 		: serial(serial)

@@ -7,7 +7,7 @@ AlignAfterOpenBracket: DontAlign
 #连续赋值等号对齐
 AlignConsecutiveAssignments: true
 # 连续声明变量对齐
-AlignConsecutiveDeclarations: true
+AlignConsecutiveDeclarations: AcrossComments
 #########
 AlignEscapedNewlines: Right
 AlignOperands:   false
