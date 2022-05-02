@@ -1,3 +1,9 @@
+/***********************************************************************/
+/**
+ * \file   JounralingObjectStore.h
+ * \author Semptember007
+ * \date   May 2022
+ *//*********************************************************************/
 #pragma once
 #include <map>
 #include <objectMap.h>

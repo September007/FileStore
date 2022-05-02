@@ -11,7 +11,9 @@ using std::thread;
 using std::vector;
 
 namespace GD {
-
+/**
+ * simply thread pool.
+ */
 class ThreadPool {
 public:
 	explicit ThreadPool(size_t n)
@@ -111,7 +113,7 @@ private:
 	std::condition_variable cond_;
 	std::mutex				mutex_;
 	// record busy thread
-	atomic_int busyCount = 0;
+	atomic_int				busyCount = 0;
 };
 
 }

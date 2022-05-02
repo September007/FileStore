@@ -1,3 +1,9 @@
+/*****************************************************************/
+/**
+ * \file   Config.h
+ * \brief  imple some methods to load config in form of json which storing in file
+ */
+/*****************************************************************/
 #pragma once
 #ifndef GD_CONFIG_HEAD
 #define GD_CONFIG_HEAD
@@ -7,7 +13,13 @@
 #include <nlohmann/json.hpp>
 using fmt::format;
 using nlohmann::json;
-
+/**
+ * get json object which read from file filename.
+ * @param rootpaths point out possiable root path of some file with name ${filename},and the first
+ * will be use
+ * @exception if read candiate file failed,will log error into `IO` instead of throw error
+ * @return if find one legal file ,will return it,otherwise return empty json object
+ */
 inline json GetConfigFromFile(const string& filename, const vector<string>& rootpaths)
 {
 	json ret;
@@ -27,15 +39,23 @@ inline json GetConfigFromFile(const string& filename, const vector<string>& root
 	}
 	return ret;
 }
-/*
- * need check empty before use
+/**
+ * need check empty before use.
+ * @param name		using to find specified file
+ * @param key		using to find the subodinated(child) json object of ones just find by ${name}
+ * @param default_class	if above find operation fialed,will log down failure and tried to find
+ * default setting,which is specified by this param
+ * @param reload			in case of config file content changed, this option point out if reload
+ * config is needed
+ * @return			if above tring success, return the json content, otherwise log down infomation
+ * and return empty json obejcvt
+ * @detail search sequence
  * integrated.default.json.{name}		first
  * integrated.json.{name}				overload
  * {name}.default.json.{name}			overload
  * {name}.json.{name}					overload
  * but this overwrite is over simple ,on in the surface of dirct key of  name
  */
-
 inline json GetConfig(
 	const string& name, const string& key, const string& default_class = "", bool reload = false)
 {
@@ -89,7 +109,12 @@ inline json GetConfig(
 	}
 	return ret;
 }
-// use this replace directly GetConfig
+/**
+ * use this replace directly GetConfig to avoid some boring result-empty checking
+ * @note for complicated config,still suggest using GetConfig
+ * @return if GetConfig successfully read something, will return it, otherwise return defalur_value
+ * \sa GetConfig Context::load()
+ */
 template <typename T>
 inline T GetconfigOverWrite(T default_value, const string& default_class, const string& name,
 	const string& key, bool reload = false)

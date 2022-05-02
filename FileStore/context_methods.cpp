@@ -1,4 +1,5 @@
 #include <context_methods.h>
+#include <object.h>
 #pragma warning(disable : 4996)
 string stdio_ReadFile(const string& path)
 {
@@ -114,4 +115,25 @@ bool keep_WriteFile(
 	if (fd)
 		fclose(fd);
 	return true;
+}
+
+string GetReferedBlockStoragePath_deep4(const ReferedBlock& rb, string root_path)
+{
+	auto s = rb.serial;
+	//(s = boost::hash<decltype(rb.serial)>()(rb.serial));
+	s		= std::hash<int64_t>()(rb.serial);
+	auto p1 = (s & 0xffff000000000000ll) >> 48;
+	auto p2 = (s & 0x0000ffff00000000ll) >> 32;
+	auto p3 = (s & 0x00000000ffff0000ll) >> 16;
+	auto p4 = (s & 0x000000000000ffffll) >> 0;
+	return fmt::format("{}/{}/{}/{}/{}.txt", root_path, p1, p2, p3, p4);
+}
+string GetReferedBlockStoragePath_deep2(const ReferedBlock& rb, string root_path)
+{
+	auto s = rb.serial;
+	//(s = boost::hash<decltype(rb.serial)>()(rb.serial));
+	s		= std::hash<int64_t>()(rb.serial);
+	auto p1 = (s & 0xffffffff00000000ll) >> 32;
+	auto p2 = (s & 0x00000000ffffffffll) >> 0;
+	return fmt::format("{}/{}/{}.txt", root_path, p1, p2);
 }

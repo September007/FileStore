@@ -1,3 +1,9 @@
+/*****************************************************************/
+/**
+ * \file   context.h
+ * \brief  define Context
+ */
+/*******************************************************************/
 #pragma once
 #include <object.h>
 #include <string>
@@ -65,8 +71,3 @@ public:
 	 */
 	bool using_io_acc = false;
 };
-
-static int i	   = 0;
-static int idadsad = 0;
-// dadasd
-static int adsad = 0;

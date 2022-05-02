@@ -32,16 +32,20 @@
 #include <spdlog/spdlog.h>
 #include <type_traits>
 #include <vector>
-
+/**
+ * using to judge if type T is generated from template templateType.
+ */
 using namespace std;
 template <template <typename... args> typename templateType, typename T>
 constexpr bool is_from_template = false;
+/**
+ * \sa is_from_template.
+ */
 template <template <typename... args> typename templateType, typename... args>
 constexpr bool is_from_template<templateType, templateType<args...>> = true;
-;
+
 template <typename T> constexpr bool is_tuple = is_from_template<tuple, T>;
 
-// Todo: json setting file
 nlohmann::json GetSetting(const string& settingFile);
 
 void			   Error_Exit(const string& msg = "");
@@ -149,7 +153,10 @@ public:
 	string universal_str() { return data; }
 	auto   GetES() const { return make_tuple(&data, &offset); }
 };
-
+/**
+ * refer data from buffer.
+ * @note almost \deprecated
+ */
 class Slice {
 public:
 	shared_ptr<buffer> data;
@@ -194,15 +201,15 @@ public:
 	auto GetES() const { return make_tuple(&start, &end); }
 };
 
-template <typename T> void		 Write(buffer& buf, T* t);
-template <typename T> void		 Read(buffer& buf, T* t);
-template <typename T> decay_t<T> Read(buffer& buf);
-template <typename T> void		 WriteArray(buffer& buf, T* t, int len);
-template <typename T> void		 ReadArray(buffer& buf, T* t, int len);
+template <typename T> void		 Write(buffer& buf, T* t);				 /**< serialize interface*/
+template <typename T> void		 Read(buffer& buf, T* t);				 /**< serialize interface*/
+template <typename T> decay_t<T> Read(buffer& buf);						 /**< serialize interface*/
+template <typename T> void		 WriteArray(buffer& buf, T* t, int len); /**< serialize interface*/
+template <typename T> void		 ReadArray(buffer& buf, T* t, int len);	 /**< serialize interface*/
 
 template <typename T, int n = 0>
 requires is_from_template<tuple, T>
-void _TupleWrite(buffer& buf, T* t)
+void _TupleWrite(buffer& buf, T* t) /**< serialize interface*/
 {
 	if constexpr (n == tuple_size_v<T>)
 		return;
@@ -214,7 +221,7 @@ void _TupleWrite(buffer& buf, T* t)
 
 template <typename T, int n = 0>
 requires is_from_template<tuple, T>
-void _TupleRead(buffer& buf, T* t)
+void _TupleRead(buffer& buf, T* t) /**< serialize interface*/
 {
 	if constexpr (n == tuple_size_v<T>)
 		return;
@@ -364,13 +371,22 @@ template <typename T> inline buffer as_buffer(const T& t)
 	Write(b, &t);
 	return b;
 }
-template <typename T> inline string as_string(const T& t) { return as_buffer(t).universal_str(); }
-template <typename T> inline T		from_buffer(buffer& buf) { return Read<T>(buf); }
-template <typename T> inline T		from_string(string str)
+template <typename T> inline string as_string(const T& t) /**< serialize interface*/
+{
+	return as_buffer(t).universal_str();
+}
+template <typename T> inline T from_buffer(buffer& buf) /**< serialize interface*/
+{
+	return Read<T>(buf);
+}
+template <typename T> inline T from_string(string str) /**< serialize interface*/
 {
 	auto b = buffer(move(str));
 	return from_buffer<T>(b);
 }
-
+/**
+ * get parent dir as name indicating.
+ * @note instead of filesystem::path::parent_path(),so \deprecated
+ */
 string GetParentDir(string& path);
 #endif	 // ASSISTANT_UTILITY_HEAD

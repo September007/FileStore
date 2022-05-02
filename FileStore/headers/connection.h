@@ -1,3 +1,11 @@
+/*****************************************************************/
+/**
+ * \file   connection.h
+ * \brief  define network object and request relative state enum
+ * \deprecated since this FileStore just focus on local file storage and journal,this network
+ * relative things means nothing but lines count,kehkeh
+ */
+/*****************************************************************/
 #pragma once
 #ifndef CONNECTION_HEAD
 #define CONNECTION_HEAD

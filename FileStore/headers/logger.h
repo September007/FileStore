@@ -1,3 +1,8 @@
+/*****************************************************************/
+/**
+ * \file   logger.h
+ * \brief  implementation of log relative things
+ *//***************************************************************/
 #pragma once
 #include <filesystem>
 #include <fmt/format.h>
@@ -7,15 +12,23 @@
 using fmt::format;
 using std::shared_ptr;
 using std::string;
+/**
+ * find spdlog::logger.
+ * @param name logger name
+ * @param force_isolate if set true, this logger will be binding to a file named
+ * log_root/${fileClass}.log,otherwise will be integrated into log_root/integrated.log
+ * @return if logger already exists, return it ,otherwise create as above param ${fileClass} and
+ * ${force_isolate} said creating new one and return it
+ * @todo: read log file root from json
+ */
 inline shared_ptr<spdlog::logger> GetLogger(
 	const string& name, const bool force_isolate = false, const string& fileClass = "integrated")
 {
-	//@Todo: read log file root from json
-	static auto logFileRoot = std::filesystem::absolute("./tmp/logs").string();
+	static auto logFileRoot = std::filesystem::absolute("./logs").string();
 	// set all output into one file for debug
 	// if (!force_isolate && name != "integrated")
 	//	return GetLogger("integrated");
-	auto ret = spdlog::get(name);
+	auto		ret = spdlog::get(name);
 	// if missing,create
 	if (ret == nullptr) {
 		{
