@@ -181,17 +181,19 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		auto rb = omap.Read_Meta<ReferedBlock>(ReferedBlock(rbs));
 		if (rb.refer_count == 1) {
 			// mean new block
-			auto to_path			= GetReferedBlockStoragePath(rb, this->fspath);
-			auto from_path			= GetReferedBlockStoragePath(rb, this->journalPath);
-			auto to_path_parent_dir = GetParentDir(to_path);
+			auto to_path   = GetReferedBlockStoragePath(rb, this->fspath);
+			auto from_path = GetReferedBlockStoragePath(rb, this->journalPath);
+			// auto to_path_parent_dir = GetParentDir(to_path);
 			try {
-				if (!filesystem::is_regular_file(to_path)) {
-					if (!filesystem::is_directory(to_path_parent_dir))
-						filesystem::create_directories(to_path_parent_dir);
-					filesystem::copy(from_path, to_path_parent_dir,
-						filesystem::copy_options::overwrite_existing);
-					LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
-				}
+				// if (!filesystem::is_regular_file(to_path)) {
+				//	if (!filesystem::is_directory(to_path_parent_dir))
+				//		filesystem::create_directories(to_path_parent_dir);
+				//	filesystem::copy(from_path, to_path_parent_dir,
+				//		filesystem::copy_options::overwrite_existing);
+				//	LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
+				// }
+				CopyData(from_path, to_path);
+				LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
 			} catch (std::exception& e) {
 				cout << e.what() << endl;
 			}
@@ -199,12 +201,13 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 	}
 	SubmitCallbacks(when_flush_done);
 	// phase 4 delete relative log in the omap
-	{ /**
-	   *  1. get opeid
-	   *  2. remove tail time_stamp
-	   *  3. delete relative omap log by prefix, which contain ${wope_log_head}+gh+new_gh,check
-	   * detail in GetOpeId()
-	   */
+	{
+		/**
+		 *  1. get opeid
+		 *  2. remove tail time_stamp
+		 *  3. delete relative omap log by prefix, which contain ${wope_log_head}+gh+new_gh,check
+		 * detail in GetOpeId()
+		 */
 		auto opeid					 = GetOpeId(wope);
 		auto p_time_stamp			 = opeid.find_last_of(":");
 		auto opeid_with_no_timestamp = opeid.substr(0, p_time_stamp);
@@ -291,22 +294,27 @@ void JournalingObjectStore::RePlay()
 		}
 	}
 	// 3
-	// todo : how do we deal with the callbacks?
+	// \todo : how do we deal with the callbacks?
 	for (auto& wope : wopes) {
 		this->callback_workers.enqueue([wope = move(wope), pthis = this] {
 			auto when_log_done_idx	   = pthis->GetNewCallBackIndex();
 			auto when_journal_done_idx = pthis->GetNewCallBackIndex();
 			auto when_flush_done_idx   = pthis->GetNewCallBackIndex();
-			pthis->RegisterCallback(when_log_done_idx, [pthis = pthis, &wope] {
-				pthis->ctx->replay_default_callback_when_log_done(wope);
+			/// after do_wope() exit after submit callbacks,then fall off this lambda,the stack
+			/// variable like wope would deconstruct,but the callbacks which need wope is not
+			/// promised to be completed,so need make_shared to extend life time of wope
+			auto shared_wope = make_shared<WOPE>(move(wope));
+			pthis->RegisterCallback(when_log_done_idx, [pthis = pthis, shared_wope] {
+				pthis->ctx->replay_default_callback_when_log_done(shared_wope);
 			});
-			pthis->RegisterCallback(when_journal_done_idx, [pthis = pthis, &wope] {
-				pthis->ctx->replay_default_callback_when_journal_done(wope);
+			pthis->RegisterCallback(when_journal_done_idx, [pthis = pthis, shared_wope] {
+				pthis->ctx->replay_default_callback_when_journal_done(shared_wope);
 			});
-			pthis->RegisterCallback(when_flush_done_idx, [pthis = pthis, &wope] {
-				pthis->ctx->replay_default_callback_when_flush_done(wope);
+			pthis->RegisterCallback(when_flush_done_idx, [pthis = pthis, shared_wope] {
+				pthis->ctx->replay_default_callback_when_flush_done(shared_wope);
 			});
-			pthis->do_wope(wope, when_log_done_idx, when_journal_done_idx, when_flush_done_idx);
+			pthis->do_wope(
+				*shared_wope.get(), when_log_done_idx, when_journal_done_idx, when_flush_done_idx);
 		});
 	}
 }

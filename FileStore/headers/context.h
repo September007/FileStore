@@ -58,11 +58,11 @@ public:
 	 * original callbacks,but this is inevitable the belows replay_default_callback_* is born to be
 	 * call when replay reload unfinished wope log
 	 */
-	std::function<void(const WOPE& wope)> replay_default_callback_when_log_done;
+	std::function<void(shared_ptr<WOPE> wope)> replay_default_callback_when_log_done;
 	/** see [replay_default_callback_when_log_done](#replay_default_callback_when_log_done) */
-	std::function<void(const WOPE& wope)> replay_default_callback_when_journal_done;
+	std::function<void(shared_ptr<WOPE> wope)> replay_default_callback_when_journal_done;
 	/** see [replay_default_callback_when_log_done](#replay_default_callback_when_log_done) */
-	std::function<void(const WOPE& wope)> replay_default_callback_when_flush_done;
+	std::function<void(shared_ptr<WOPE> wope)> replay_default_callback_when_flush_done;
 
 	/**
 	 * whether using epoll or iocp ,for this filestore, which give up these feature,

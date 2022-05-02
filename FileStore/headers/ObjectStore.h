@@ -9,17 +9,32 @@
 using CallBackType = std::function<void()>;
 using std::string;
 /**
- * .
+ * @brief this class define basic store interface.
+ * @note  like journalingObjectStore on the deriving tree didn't implement these interface ,so
+ * actually that mean journlaingObjectStore,ObjecStore, and BlockStore are virtual class
  */
 class StoreInterface {
 public:
 	virtual ~StoreInterface() {};
-	// using string as unified key of stored data,other key like GHObject should
-	// serialize
-	virtual void   RecordData(const string& key, const string& data)	= 0;
-	virtual string ReadData(const string& key)							= 0;
-	virtual void   RemoveData(const string& key)						= 0;
-	virtual void   CopyData(const string& keyFrom, const string& keyTo) = 0;
+	/**
+	 * @brief write file, in filestore.
+	 *  using file path as key
+	 */
+	virtual void RecordData(const string& key, const string& data) = 0;
+	/**
+	 * @brief read file, in filestore.
+	 *  using file path as key, in filestore
+	 * @retval the file content
+	 */
+	virtual string ReadData(const string& key) = 0;
+	/** delete file, in filestore. using file path as key.*/
+	virtual void RemoveData(const string& key) = 0;
+	/**
+	 * no matter what means key is symbol of, the implements should support it.
+	 * in filestore, key is file or directory path, which require implements have the ablity to
+	 * decide what to do with what it is.
+	 */
+	virtual void CopyData(const string& keyFrom, const string& keyTo) = 0;
 };
 /**
  * storage for block data
@@ -47,8 +62,7 @@ protected:
 	void EraseBlock(ReferedBlock rb)
 	{
 		auto path = GetReferedBlockStoragePath(rb, rbPath);
-		if (filesystem::is_regular_file(path))
-			filesystem::remove(path);
+		RemoveData(path);
 	}
 	ReferedBlock addNewReferedBlock(string data, string root_path)
 	{
