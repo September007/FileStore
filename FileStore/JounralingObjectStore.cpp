@@ -174,7 +174,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 	}
 	SubmitCallbacks(when_flush_done);
 	{
-		/** wope phase.4 delete relative log in the omap
+		/** wope phase.4 delete relative log in the omap and log file in journal
 		 *  1. get opeid
 		 *  2. remove tail time_stamp
 		 *  3. delete relative omap log by prefix, which contain ${wope_log_head}+gh+new_gh,check
@@ -184,6 +184,10 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		auto p_time_stamp			 = opeid.find_last_of(":");
 		auto opeid_with_no_timestamp = opeid.substr(0, p_time_stamp);
 		omap.EraseMatchPrefix(opeid_with_no_timestamp);
+		for (auto rb_serial : orb.serials_list) {
+			auto path = GetReferedBlockStoragePath(rb_serial, this->journalpath);
+			StoreInterface::RemoveData(path);
+		}
 	}
 }
 

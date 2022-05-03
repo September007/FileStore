@@ -23,6 +23,7 @@ bool Context::load(string name)
 	config = GetConfig(name, "config", "linux.context", true);
 #endif
 	try {
+		this->name	= filesystem::absolute(config["name"].get<string>()).string();
 		fspath		= filesystem::absolute(config["fsPath"].get<string>()).string();
 		journalpath = filesystem::absolute(config["journalPath"].get<string>()).string();
 		kvpath		= filesystem::absolute(config["kvPath"].get<string>()).string();

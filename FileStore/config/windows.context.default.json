@@ -1,5 +1,6 @@
 {
   "config": {
+    "name": "Windows_default_context",
     "fsPath": "G:/FileStore/fs",
     "journalPath": "G:/FileStore/journalPath",
     "kvPath": "G:/FileStore/kv",

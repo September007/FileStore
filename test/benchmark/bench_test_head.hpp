@@ -46,7 +46,6 @@ inline vector<WOPE> create_test_WOPES(
 	GHObject_t gh;
 	gh.hobj.oid.name = "test_obj";
 	auto new_gh		 = gh;
-	new_gh.generation++;
 	WOPE wope(gh, new_gh, vector<WOPE::opetype> { block_cnt, WOPE::opetype::Insert }, {}, {});
 	wope.block_datas.reserve(block_cnt);
 	for (int i = 0; i < int(block_cnt); ++i) {
@@ -54,6 +53,9 @@ inline vector<WOPE> create_test_WOPES(
 		wope.block_datas.push_back(string(block_data_length, '0' + i));
 	}
 	vector<WOPE> wopes(sz, wope);
+
+	for (int i = 0; i < sz; ++i)
+		wopes[i].new_ghobj.generation = gh.generation + i + 1;
 
 	for (int i = 0; i < sz; ++i)
 		wopes[i].new_ghobj.generation = i + 1;

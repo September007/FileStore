@@ -18,6 +18,7 @@ using std::string;
  */
 class DLL_INTERFACE_API Context {
 public:
+	string name;   /**< unique context name, may need meta server assure this*/
 	string fspath; /**< filestore path,		where journal block will be move to when flush some wope
 					* and rope will seek data from. this is \deprecated. in fact ObjectStore::fspath
 					* is reference to BlockStore::rbpath
