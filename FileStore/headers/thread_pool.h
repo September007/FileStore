@@ -1,3 +1,8 @@
+/*****************************************************************/
+/**
+ * \file   thread_pool.h
+ * \brief  thread pool
+ *//***************************************************************/
 #pragma once
 #include <assistant_utility.h>
 #include <functional>

@@ -1,9 +1,14 @@
+/******************************************************************/
+/**
+ * \file   ObjectStore.h
+ * \brief  define ObjectStore and its parent interface class
+ *//****************************************************************/
 #pragma once
 #include <config.h>
 #include <context.h>
 #include <functional>
 #include <object.h>
-#include <referedBlock.h>
+
 #include <string>
 
 /*! \fn typedef std::function<void()> CallBackType;

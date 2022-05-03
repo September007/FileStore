@@ -1,5 +1,10 @@
 #pragma once
-
+/***************************************************************/
+/**
+ * \file   timer.h
+ * \brief   define Timer TimerCaller and ConcTimerCaller
+ */
+/**************************************************************/
 // for the macro
 #include <assistant_utility.h>
 #include <chrono>
@@ -16,10 +21,10 @@ public:
 	using clock		 = chrono::system_clock;
 	using time_point = clock::time_point;
 
-	TimerTask			 task;
-	TimerAfter			 afterTask;
-	mutable TimerCaller* caller;
-	time_point			 when;
+	TimerTask			   task;
+	TimerAfter			   afterTask;
+	mutable TimerCaller*   caller;
+	time_point			   when;
 	// support repeatation
 	int					   repeatation = 0;
 	Timer::clock::duration round	   = Timer::clock::duration();
@@ -78,7 +83,7 @@ public:
 		, interval(m.interval)
 	{
 	}
-	bool is_actived() { return !_shutdown; }
+	bool		 is_actived() { return !_shutdown; }
 	// callergroup is obligated to active and shutdown caller
 	virtual void active() { _shutdown = false; }
 	virtual void shutdown() { _shutdown = true; }
@@ -109,7 +114,7 @@ public:
 	}
 	void AddTimer(const Timer& t);
 
-	void Tick() override;
+	void		 Tick() override;
 	// set a end timer that will call shutdown when all the timer for now exectuted,
 	// or just shut this down if there have no timer
 	virtual void SetTerminationAtEnd();

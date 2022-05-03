@@ -1,3 +1,9 @@
+/*****************************************************************/
+/**
+ * \file   object.h
+ * \brief  define filestore relative objects, such as GHObject_t ReferedBlock, and WOPE
+ *
+ *//***************************************************************/
 #pragma once
 #include <assistant_utility.h>
 #include <boost/functional/hash.hpp>

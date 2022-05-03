@@ -19,6 +19,7 @@ bool ObjectMap::Mount(Context* context)
 			LOG_ERROR("RocksKV", format("create RocksKV[{}] failed.", path));
 			return false;
 		}
+		return true;
 	} catch (std::exception& e) {
 		LOG_ERROR("RocksKV", format("catch error[{}]", e.what()));
 		return false;

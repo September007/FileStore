@@ -1,3 +1,14 @@
+/*****************************************************************/
+/** \file   Mutex.h
+ * \brief   define method GetMutex to seek for named mutex
+ * \note	this is working on uncertain requirement for mutex. if somewhere use this already verify
+ * the need of mutex,then this maybe need to be replaced by using class member(or function-static
+ * mutex)
+ * \deprecated almost useless
+ *
+ * \author 28688
+ * \date   May 2022
+ *//***************************************************************/
 #pragma once
 #ifndef GD_MUTEX_HEAD
 #define GD_MUTEX_HEAD
@@ -9,9 +20,9 @@ enum class mutex_enum {
 	// for x
 	header_lock,
 };
-//@Todo : one day, all the places where GetMutex used ,may change logic to as mutex bind as object's
-// member
-// but this is freer
+/**
+ * for named or binded mutex, this is more freer.
+ */
 template <typename... ArgsType> std::mutex& GetMutex(ArgsType... args)
 {
 	using keyT						 = std::tuple<ArgsType...>;

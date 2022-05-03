@@ -1,3 +1,8 @@
+/*****************************************************************************************************/
+/**
+ * \file   ObjectMap.h
+ * \brief  define objectMap which support object attr storage , or in another word, table storage
+ *//**************************************************************************************************/
 #pragma once
 #include <assistant_utility.h>
 #include <context.h>
