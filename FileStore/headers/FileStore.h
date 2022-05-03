@@ -5,15 +5,16 @@
 /*****************************************************************/
 
 #pragma once
-
 #include <JounralingObjectStore.h>
 #include <iostream>
+#include <port.h>
 /**
  * \brief	filesystem implement of StoreInterface .
  * \author	September007
  * \date	2022-5-2
  */
-class FileStore : public JournalingObjectStore {
+
+class DLL_INTERFACE_API FileStore : public JournalingObjectStore {
 
 public:
 	/** actually nothing to do but recurisvely call JournalingObjectStore::Mount(). */

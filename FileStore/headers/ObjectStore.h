@@ -17,7 +17,7 @@ using std::string;
  * @note  like journalingObjectStore on the deriving tree didn't implement these interface ,so
  * actually that mean journlaingObjectStore,ObjecStore, and BlockStore are virtual class
  */
-class StoreInterface {
+class DLL_INTERFACE_API StoreInterface {
 public:
 	virtual ~StoreInterface() {};
 	/**
@@ -44,7 +44,7 @@ public:
  * @class
  * @brief storage interface for block data.
  */
-class BlockStore : public StoreInterface {
+class DLL_INTERFACE_API BlockStore : public StoreInterface {
 protected:
 	string	 rbpath; /**< refered block storage path */
 	Context* ctx;	 /**< from this class import Context member */
@@ -144,7 +144,7 @@ protected:
  * @note seems like these inerfaces are not recommended, otherwise what's journalingObecjtStore for
  * ?
  */
-class ObjectStore : public BlockStore {
+class DLL_INTERFACE_API ObjectStore : public BlockStore {
 protected:
 	/**  cuz blockstore already have storage path(BlockStore::rbpath), and seems like we need fspath
 	 * ,so set fspath as reference*/

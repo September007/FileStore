@@ -41,6 +41,10 @@ find_package(benchmark CONFIG REQUIRED)
 include_directories( ./test ./src ./src/deps "$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
 message("add include vcpkg dirs for intelli: $ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
 
+#set dll output path for linking ,just in case of windows
+set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
+
 # Include sub-projects.
 add_subdirectory ("FileStore")
 add_subdirectory ("test/unit_test")

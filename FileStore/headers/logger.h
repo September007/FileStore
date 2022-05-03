@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <memory>
+#include <port.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 using fmt::format;
@@ -21,6 +22,7 @@ using std::string;
  * ${force_isolate} said creating new one and return it
  * @todo: read log file root from json
  */
+DLL_INTERFACE_API
 inline shared_ptr<spdlog::logger> GetLogger(
 	const string& name, const bool force_isolate = false, const string& fileClass = "integrated")
 {

@@ -1,11 +1,12 @@
 #pragma once
 #include <assistant_utility.h>
 #include <context.h>
+#include <port.h>
 #include <rocksdb/db.h>
 #include <simulate_table.h>
 using namespace rocksdb;
 using std::is_same_v;
-class ObjectMap {
+class DLL_INTERFACE_API ObjectMap {
 protected:
 	string		 path;
 	rocksdb::DB* db;
@@ -17,8 +18,8 @@ public:
 	{
 	}
 	~ObjectMap() { UnMount(); }
-	bool Mount(Context* context);
-	bool UnMount();
+	bool								 Mount(Context* context);
+	bool								 UnMount();
 	// meta data interface
 	virtual rocksdb::Status				 Write_Meta(const string& key, const string& value);
 	virtual rocksdb::Status				 Read_Meta(const string& key, string& value);
@@ -30,7 +31,7 @@ public:
 	template <TableType T> T			 Read_Meta(const T& key);
 	// template <typename T>
 	// void Erase_Meta(const TableKeyType<T>& key);
-	template <typename T> void Erase_Meta(const T& key);
+	template <typename T> void			 Erase_Meta(const T& key);
 
 	template <typename KeyType, typename ValType>
 	void Write_Meta(const KeyType key, const ValType& val)

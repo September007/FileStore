@@ -2,7 +2,7 @@
 #include <assistant_utility.h>
 #include <filesystem>
 #include <object.h>
-#pragma wanring(disable : 4996)
+#pragma warning(disable : 4996)
 /**
  * get nlohmann::json from specified file settingFile.
  * @note recommend to using GetConfigFromFile,so \deprecated

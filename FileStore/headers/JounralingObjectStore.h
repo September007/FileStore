@@ -16,7 +16,7 @@ using CallBackIndex = uint64_t;
 /**
  * @brief implement basic journal logic.
  */
-class JournalingObjectStore : public ObjectStore {
+class DLL_INTERFACE_API JournalingObjectStore : public ObjectStore {
 protected:
 	/** journal storage path,using as rb root path*/
 	std::string										   journalpath;

@@ -15,7 +15,7 @@ using std::string;
  * @note the context::load() does not set everything up yet, some setting member
  * can be customize as wished, seek benchmark for sample
  */
-class Context {
+class DLL_INTERFACE_API Context {
 public:
 	string fspath; /**< filestore path,		where journal block will be move to when flush some wope
 					* and rope will seek data from. this is \deprecated. in fact ObjectStore::fspath
@@ -36,7 +36,7 @@ public:
 
 	string rope_log_head; /**<	rope_log_head will be used to generated opeid but not used yet,
 						   because don't see any benefit of read operation records yet.
-						 */
+					 */
 	Context();
 	/**
 	 * @brief according to config file specified by $name, to set up setting.
