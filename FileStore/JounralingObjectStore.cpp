@@ -1,3 +1,4 @@
+#include "JounralingObjectStore.h"
 #include <JounralingObjectStore.h>
 
 void JournalingObjectStore::RegisterCallback(CallBackIndex idx, CallBackType call)
@@ -44,15 +45,38 @@ void JournalingObjectStore::SubmitCallbacks(CallBackIndex idx)
 		callback_workers.enqueue(move(cb));
 }
 
+ReferedBlock JournalingObjectStore::GetNewReferedBlock() { return ++atomic_serial; }
+
 bool JournalingObjectStore::Mount(Context* ctx)
 {
 	journalpath = ctx->journalpath;
 	callback_workers.active(ctx->journal_callback_worker_count);
 
-	return omap.Mount(ctx) && ObjectStore::Mount(ctx);
+	omap.Mount(ctx);
+	ObjectStore::Mount(ctx);
+	/** load atomic_serail */
+	auto rbprefix	= omap.Get_Type_Prefix<ReferedBlock>();
+	auto previousRB = omap.GetMatchPrefix(rbprefix);
+	using rbsT		= decltype(ReferedBlock::serial);
+	using rbrT		= decltype(ReferedBlock::refer_count);
+	set<ReferedBlock> sr;
+	for (auto& prb : previousRB) {
+		buffer buf(prb.first), sbuf(prb.second);
+		auto   prefix = ::Read<string>(buf);
+		CTX_LOG_EXPECT_EQ(ctx->name, prefix, rbprefix, "");
+		auto rb_s	  = ::Read<rbsT>(buf);
+		auto rb_refer = ::Read<rbrT>(sbuf);
+		sr.insert(ReferedBlock(rb_s, rb_refer));
+	}
+	this->atomic_serial = (sr.rbegin() != sr.rend() ? sr.rbegin()->serial : 1);
+	return true;
 }
 
-void JournalingObjectStore::UnMount() { ObjectStore::UnMount(); }
+void JournalingObjectStore::UnMount()
+{
+	this->callback_workers.shutdown();
+	ObjectStore::UnMount();
+}
 
 void JournalingObjectStore::Write(const GHObject_t& ghobj, const string& data) {}
 
@@ -194,31 +218,33 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		auto p_time_stamp			 = opeid.find_last_of(":");
 		auto opeid_with_no_timestamp = opeid.substr(0, p_time_stamp);
 		omap.EraseMatchPrefix(opeid_with_no_timestamp);
-		// auto id		 = Get_Thread_Id();
-		// namespace fs = filesystem;
-		// auto perm	 = [](fs::perms p) -> string {
-		//	   return string() + ((p & fs::perms::owner_read) != fs::perms::none ? "r" : "-")
-		//		   + ((p & fs::perms::owner_write) != fs::perms::none ? "w" : "-")
-		//		   + ((p & fs::perms::owner_exec) != fs::perms::none ? "x" : "-")
-		//		   + ((p & fs::perms::group_read) != fs::perms::none ? "r" : "-")
-		//		   + ((p & fs::perms::group_write) != fs::perms::none ? "w" : "-")
-		//		   + ((p & fs::perms::group_exec) != fs::perms::none ? "x" : "-")
-		//		   + ((p & fs::perms::others_read) != fs::perms::none ? "r" : "-")
-		//		   + ((p & fs::perms::others_write) != fs::perms::none ? "w" : "-")
-		//		   + ((p & fs::perms::others_exec) != fs::perms::none ? "x" : "-");
-		// };
-		// for (auto rb_serial : rb_refer1) {
-		//	auto path	   = GetReferedBlockStoragePath(rb_serial, this->journalpath);
-		//	auto path_perm = filesystem::status(path).permissions();
-		//	auto p		   = path_perm & filesystem::perms::owner_write;
-		//	if (!filesystem::is_regular_file(path) || p == filesystem::perms::none) {
-		//		int	 i	  = 0;
-		//		auto pstr = perm(path_perm);
-		//		i++;
-		//	}
-		//	// CTX_LOG_INFO(ctx->name, format("{} will tring to remove path {}", id, path));
-		//	RemoveData(path);
-		// }
+		auto id		 = Get_Thread_Id();
+		namespace fs = filesystem;
+		auto perm	 = [](fs::perms p) -> string {
+			   return string() + ((p & fs::perms::owner_read) != fs::perms::none ? "r" : "-")
+				   + ((p & fs::perms::owner_write) != fs::perms::none ? "w" : "-")
+				   + ((p & fs::perms::owner_exec) != fs::perms::none ? "x" : "-")
+				   + ((p & fs::perms::group_read) != fs::perms::none ? "r" : "-")
+				   + ((p & fs::perms::group_write) != fs::perms::none ? "w" : "-")
+				   + ((p & fs::perms::group_exec) != fs::perms::none ? "x" : "-")
+				   + ((p & fs::perms::others_read) != fs::perms::none ? "r" : "-")
+				   + ((p & fs::perms::others_write) != fs::perms::none ? "w" : "-")
+				   + ((p & fs::perms::others_exec) != fs::perms::none ? "x" : "-");
+		};
+		for (auto rb_serial : rb_refer1) {
+			auto path	   = GetReferedBlockStoragePath(rb_serial, this->journalpath);
+			auto path_perm = filesystem::status(path).permissions();
+			auto p		   = path_perm & filesystem::perms::owner_write;
+			auto rb		   = omap.Read_Meta<ReferedBlock>(rb_serial);
+			if (!filesystem::is_regular_file(path) || p == filesystem::perms::none
+				|| rb.refer_count == 0) {
+				int	 i	  = 0;
+				auto pstr = perm(path_perm);
+				i++;
+			}
+			// CTX_LOG_INFO(ctx->name, format("{} will tring to remove path {}", id, path));
+			RemoveData(path);
+		}
 	}
 }
 
@@ -288,7 +314,9 @@ void JournalingObjectStore::RePlay()
 	 *  3. reload each ope
 	 */
 	// 1
-	auto		 undone_wopes = omap.GetMatchPrefix(ctx->wope_log_head);
+	auto undone_wopes
+		= omap.GetMatchPrefix(omap._Create_type_headed_key<decltype(GetOpeId(declval<WOPE>())),
+							  decltype(GetOpeId(declval<WOPE>()))>(ctx->wope_log_head));
 	// 2
 	vector<WOPE> wopes;
 	wopes.reserve(undone_wopes.size());

@@ -37,6 +37,9 @@ TEST(TMP2, omap)
 	ctx.load("");
 	omap.Mount(&ctx);
 	omap.Write_Meta<int, string>(1, "str1");
+	auto r11 = omap.Read_Meta<int, string>(1);
+
+	omap.Write_Meta<int, string>(1, "str1");
 	omap.Write_Meta<int, string>(2, "str2");
 	omap.Write_Meta<int, string>(3, "str3");
 	auto r1 = omap.Read_Meta<int, string>(1);

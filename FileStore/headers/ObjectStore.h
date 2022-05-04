@@ -17,7 +17,12 @@
 	LOG_WARN(logname, fmt::format("{}:{}", Get_Thread_Id(), msg), true, "", ctx->logpath);
 #define CTX_LOG_ERROR(logname, msg)                                                                \
 	LOG_ERROR(logname, fmt::format("{}:{}", Get_Thread_Id(), msg), true, "", ctx->logpath);
-
+#define CTX_LOG_EXPECT_EQ(logname, l, r, msg)                                                      \
+	do {                                                                                           \
+		if ((l) != (r))                                                                            \
+			LOG_ERROR(logname, fmt::format("{}:[{}!={}],msg:{}", Get_Thread_Id(), #l, #r, msg),    \
+				true, "", ctx->logpath);                                                           \
+	} while (0)
 /*! \fn typedef std::function<void()> CallBackType;
  *  callback type
  */
@@ -84,6 +89,12 @@ protected:
 		RemoveData(path);
 	}
 	/**
+	 * how to construct a rb with a new unique serial.
+	 * JournalingObjectStore will imple this by maintain a life time atomic serial counter and
+	 * JournalingObjectStore::Mount it from omap
+	 */
+	virtual ReferedBlock GetNewReferedBlock() = 0;
+	/**
 	 * add new ReferedBlock to physical storage device, this rely on StoreInterface::RecordData().
 	 * @param data the data the referedblock will carring
 	 * @param root_path the root path of rb
@@ -91,9 +102,9 @@ protected:
 	 * @note journal and disk(or filestore itself) have different root path, naming
 	 * JournalingObjectStore::journalpath and ObjectStore::fspath
 	 */
-	ReferedBlock addNewReferedBlock(string data, string root_path)
+	ReferedBlock		 addNewReferedBlock(string data, string root_path)
 	{
-		auto rb		   = ReferedBlock::getNewReferedBlock();
+		auto rb		   = GetNewReferedBlock();
 		rb.refer_count = 0;
 		auto rbPath	   = GetReferedBlockStoragePath(rb, root_path);
 		// ctx->m_WriteFile(rbPath, data, true);

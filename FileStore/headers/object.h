@@ -325,6 +325,13 @@ public:
 		, refer_count(refer_count)
 	{
 	}
+	bool operator<(const ReferedBlock& r) const
+	{
+		return serial < r.serial || serial == r.serial && refer_count < r.refer_count;
+	}
+	/**
+	 * call chrono::clock::now() can't assure unique,this is \deprecated.
+	 */
 	static ReferedBlock getNewReferedBlock()
 	{
 		// this just create a increment serial for observe

@@ -37,14 +37,17 @@ protected:
 	void		  MergeCallback(CallBackIndex to, const vector<CallBackIndex>& froms);
 	void		  UnregisterCallBack(CallBackIndex idx);
 	void		  SubmitCallbacks(CallBackIndex idx);
-
+	/** work for GetNewReferedBlock */
+	atomic<decltype(ReferedBlock::serial)> atomic_serial;
+	/** inherite from BlockStore */
+	ReferedBlock						   GetNewReferedBlock();
 	/**
 	 * object map.
 	 * using Rocksdb for storage
 	 * @note initialization using Context::kvpath, Mount when JournalingObjectStore::Mount(),
 	 * UnMount() too
 	 */
-	ObjectMap	omap;
+	ObjectMap<true>						   omap;
 	/**
 	 * as name indicating
 	 */
