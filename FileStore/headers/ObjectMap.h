@@ -28,7 +28,7 @@ protected:
 	string		 path;
 	rocksdb::DB* db;
 
-	mutex _m;
+	std::shared_mutex _m;
 
 public:
 	ObjectMap()
@@ -100,10 +100,11 @@ public:
 	{
 		buffer buf;
 		if constexpr (with_type_head) {
-			// decltype(typeid(type_head_type).hash_code()) hsh;
-			// Read(buf, &hsh);
-			/** \sa Get_Type_Prefix and _Create_type_headed_key, prefix just a string */
-			Read<string>(buf);
+			lock_guard
+				// decltype(typeid(type_head_type).hash_code()) hsh;
+				// Read(buf, &hsh);
+				/** \sa Get_Type_Prefix and _Create_type_headed_key, prefix just a string */
+				Read<string>(buf);
 			return Read<oritype>(buf);
 		} else {
 			return Read<oritype>(buf);
@@ -186,7 +187,7 @@ template <bool with_type_head> bool ObjectMap<with_type_head>::Mount(Context* co
  */
 template <bool with_type_head> bool ObjectMap<with_type_head>::UnMount()
 {
-	lock_guard lg(_m);
+	std::unique_lock lg(_m);
 	if (db != nullptr)
 		db->Close();
 	db = nullptr;
@@ -196,23 +197,23 @@ template <bool with_type_head> bool ObjectMap<with_type_head>::UnMount()
 template <bool with_type_head>
 rocksdb::Status ObjectMap<with_type_head>::Write_Meta(const string& key, const string& value)
 {
-	lock_guard lg(_m);
-	auto	   ret = db->Put(rocksdb::WriteOptions(), key, value);
+	std::unique_lock lg(_m);
+	auto			 ret = db->Put(rocksdb::WriteOptions(), key, value);
 	return ret;
 }
 
 template <bool with_type_head>
 rocksdb::Status ObjectMap<with_type_head>::Read_Meta(const string& key, string& value)
 {
-	lock_guard lg(_m);
-	auto	   status = db->Get(rocksdb::ReadOptions(), key, &value);
+	std::shared_lock lg(_m);
+	auto			 status = db->Get(rocksdb::ReadOptions(), key, &value);
 	return status;
 }
 
 template <bool with_type_head>
 rocksdb::Status ObjectMap<with_type_head>::Erase_Meta(const string& key)
 {
-	lock_guard lg(_m);
+	std::unique_lock lg(_m);
 	return db->Delete(rocksdb::WriteOptions(), key);
 }
 template <bool with_type_head>
