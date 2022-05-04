@@ -21,4 +21,3 @@ BENCHMARK(write50_obj_of_block__cnt_len)
 BENCHMARK(write50_obj_of_block__cnt_len)
     ->Args({5, 4194305});
 // clang-format on
-BENCHMARK_MAIN();

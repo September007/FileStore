@@ -15,6 +15,12 @@ using std::string;
  * @brief contain setting for FileStore and its parent class.
  * @note the context::load() does not set everything up yet, some setting member
  * can be customize as wished, seek benchmark for sample
+ * @note the naming contract is little confused
+ *     * about data in type int,	using underscope as split-character
+ *     * about data in type string in json config file, using camel
+ *     * about data in type string in Context, if less than
+ *     * about data in type string in json config file, using camel
+ *     *
  */
 class DLL_INTERFACE_API Context {
 public:
@@ -24,14 +30,14 @@ public:
 					* is reference to BlockStore::rbpath
 					* \sa ObjectStore()
 					*/
-	string journalpath; /**< journal path,	where journal block will be write. */
-	string kvpath;		/**< kv path,		where to mount RocksKV.*/
-	string rbpath;		/**< rb path,		where to store referedblock data in blockstore */
-
-	int default_block_size;			   /**< not used yet */
-	int journal_callback_worker_count; /**< the count of threads of
-										  JournalingObjectStore::callback_worker */
-	int journal_write_worker_count;	   /**< not used yet */
+	string journalpath;		   /**< journal path,	where journal block will be write. */
+	string kvpath;			   /**< kv path,		where to mount RocksKV.*/
+	string rbpath;			   /**< rb path,		where to store referedblock data in blockstore */
+	string logpath;			   /**< log path,		where to storage log files*/
+	int	   default_block_size; /**< not used yet */
+	int	   journal_callback_worker_count; /**< the count of threads of
+											 JournalingObjectStore::callback_worker */
+	int	   journal_write_worker_count;	  /**< not used yet */
 
 	string wope_log_head; /**<	this is used by  GetOpeId() to generate opeid then the
 						journalObjectStore can retrieve unfinished ope through this head in omap*/
@@ -39,6 +45,7 @@ public:
 	string rope_log_head; /**<	rope_log_head will be used to generated opeid but not used yet,
 						   because don't see any benefit of read operation records yet.
 					 */
+
 	Context();
 	/**
 	 * @brief according to config file specified by $name, to set up setting.

@@ -65,6 +65,10 @@ void JournalingObjectStore::Modify(
 void JournalingObjectStore::Submit_wope(WOPE wope, CallBackType when_log_done,
 	CallBackType when_journal_done, CallBackType when_flush_done)
 {
+	CTX_LOG_INFO(ctx->name,
+		fmt::format("wope:[ gh:[{}:{}] ,new_gh:[{}:{}] in form of [name:generation]]",
+			wope.ghobj.hobj.oid.name, wope.ghobj.generation, wope.new_ghobj.hobj.oid.name,
+			wope.new_ghobj.generation));
 	auto log_done	  = GetNewCallBackIndex();
 	auto journal_done = GetNewCallBackIndex();
 	auto flush_done	  = GetNewCallBackIndex();
@@ -84,6 +88,9 @@ void JournalingObjectStore::Submit_wope(WOPE wope, CallBackType when_log_done,
 void JournalingObjectStore::Submit_rope(
 	ROPE rope, ROPE_Result& rope_reulst, CallBackType when_read_done)
 {
+	CTX_LOG_INFO(ctx->name,
+		fmt::format("rope:[ gh:[{}:{}] ] in form of [name:generation]]", rope.ghobj.hobj.oid.name,
+			rope.ghobj.generation));
 	auto read_done = GetNewCallBackIndex();
 	RegisterCallback(read_done, move(when_read_done));
 	callback_workers.enqueue([rope = move(rope), read_done, pthis = this, presult = &rope_reulst] {
@@ -158,15 +165,18 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 	/** wope phase.3 log flush
 	 *   copy block data to fs path
 	 */
+	// record this for future phase.4
+	list<ReferedBlock> rb_refer1;
 	for (auto rbs : orb.serials_list) {
 		auto rb = omap.Read_Meta<ReferedBlock>(ReferedBlock(rbs));
 		if (rb.refer_count == 1) {
 			// mean new block
+			rb_refer1.push_back(rb);
 			auto to_path   = GetReferedBlockStoragePath(rb, this->fspath);
 			auto from_path = GetReferedBlockStoragePath(rb, this->journalpath);
 			try {
 				CopyData(from_path, to_path);
-				LOG_INFO("wope", format("copy block from {} to {}", from_path, to_path));
+				CTX_LOG_INFO(ctx->name, format("copy block from {} to {}", from_path, to_path));
 			} catch (std::exception& e) {
 				cout << e.what() << endl;
 			}
@@ -184,10 +194,31 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		auto p_time_stamp			 = opeid.find_last_of(":");
 		auto opeid_with_no_timestamp = opeid.substr(0, p_time_stamp);
 		omap.EraseMatchPrefix(opeid_with_no_timestamp);
-		for (auto rb_serial : orb.serials_list) {
-			auto path = GetReferedBlockStoragePath(rb_serial, this->journalpath);
-			StoreInterface::RemoveData(path);
-		}
+		// auto id		 = Get_Thread_Id();
+		// namespace fs = filesystem;
+		// auto perm	 = [](fs::perms p) -> string {
+		//	   return string() + ((p & fs::perms::owner_read) != fs::perms::none ? "r" : "-")
+		//		   + ((p & fs::perms::owner_write) != fs::perms::none ? "w" : "-")
+		//		   + ((p & fs::perms::owner_exec) != fs::perms::none ? "x" : "-")
+		//		   + ((p & fs::perms::group_read) != fs::perms::none ? "r" : "-")
+		//		   + ((p & fs::perms::group_write) != fs::perms::none ? "w" : "-")
+		//		   + ((p & fs::perms::group_exec) != fs::perms::none ? "x" : "-")
+		//		   + ((p & fs::perms::others_read) != fs::perms::none ? "r" : "-")
+		//		   + ((p & fs::perms::others_write) != fs::perms::none ? "w" : "-")
+		//		   + ((p & fs::perms::others_exec) != fs::perms::none ? "x" : "-");
+		// };
+		// for (auto rb_serial : rb_refer1) {
+		//	auto path	   = GetReferedBlockStoragePath(rb_serial, this->journalpath);
+		//	auto path_perm = filesystem::status(path).permissions();
+		//	auto p		   = path_perm & filesystem::perms::owner_write;
+		//	if (!filesystem::is_regular_file(path) || p == filesystem::perms::none) {
+		//		int	 i	  = 0;
+		//		auto pstr = perm(path_perm);
+		//		i++;
+		//	}
+		//	// CTX_LOG_INFO(ctx->name, format("{} will tring to remove path {}", id, path));
+		//	RemoveData(path);
+		// }
 	}
 }
 

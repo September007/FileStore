@@ -20,17 +20,16 @@ using std::string;
  * log_root/${fileClass}.log,otherwise will be integrated into log_root/integrated.log
  * @return if logger already exists, return it ,otherwise create as above param ${fileClass} and
  * ${force_isolate} said creating new one and return it
- * @todo: read log file root from json
  */
 DLL_INTERFACE_API
-inline shared_ptr<spdlog::logger> GetLogger(
-	const string& name, const bool force_isolate = false, const string& fileClass = "integrated")
+inline shared_ptr<spdlog::logger> GetLogger(const string& name, const bool force_isolate = false,
+	const string& fileClass	  = "integrated",
+	const string& logFileRoot = std::filesystem::absolute("./logs").string())
 {
-	static auto logFileRoot = std::filesystem::absolute("./logs").string();
 	// set all output into one file for debug
 	// if (!force_isolate && name != "integrated")
 	//	return GetLogger("integrated");
-	auto		ret = spdlog::get(name);
+	auto ret = spdlog::get(name);
 	// if missing,create
 	if (ret == nullptr) {
 		{
@@ -43,27 +42,28 @@ inline shared_ptr<spdlog::logger> GetLogger(
 			auto logfilename
 				= fmt::format("{}/{}.log", logFileRoot, force_isolate ? name : fileClass);
 			bool create_new = false;
+			// check if dir exist
+			if (!std::filesystem ::is_directory(logFileRoot))
+				std::filesystem::create_directories(logFileRoot);
 			ret	  // = spdlog::basic_logger_mt<spdlog::synchronous_factory>(name, logfilename,
 				  // false);
 				= spdlog::synchronous_factory::create<spdlog::sinks::basic_file_sink_st>(
 					name, logfilename, false);
-			if (ret != nullptr)
-				create_new = true;
+			create_new = ret != nullptr;
 			// if create failed, return default
 			if (!ret) {
 				// try return selfdefined first
 				if (name != "default")
-					ret = GetLogger("default", true, "default");
+					ret = GetLogger("default", true, "default", logFileRoot);
 			}
 			if (!ret) {
 				spdlog::warn("create log file[{}]failed {}:{}", logfilename, __FILE__, __LINE__);
 				ret = spdlog::default_logger();
 			}
-			if (create_new) {
+			if (create_new)
 				ret->info("log:{} just created", name);
-			} else {
+			else
 				ret->info("creating log: {} just failed, this is default", name);
-			}
 		}
 	}
 	return ret;

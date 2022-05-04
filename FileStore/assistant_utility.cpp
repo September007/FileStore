@@ -85,3 +85,10 @@ string GetParentDir(string& path)
 			break;
 	return path;
 }
+
+unsigned int Get_Thread_Id()
+{
+	auto id = this_thread::get_id();
+	auto p	= (unsigned int*)&id;
+	return *p;
+}

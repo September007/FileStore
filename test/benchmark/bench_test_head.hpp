@@ -2,6 +2,8 @@
 #include <FileStore.h>
 #include <benchmark/benchmark.h>
 #include <chrono>
+#include <csignal>
+#include <cstdlib>
 using namespace benchmark;
 
 inline void remove_ctx_dir(Context& ctx)
@@ -60,4 +62,25 @@ inline vector<WOPE> create_test_WOPES(
 	for (int i = 0; i < sz; ++i)
 		wopes[i].new_ghobj.generation = i + 1;
 	return move(wopes);
+}
+
+void abort_handler(int sig)
+{
+	int i = 0;
+	++i;
+	_Exit(SIGABRT);
+}
+int main(int argc, char** argv)
+{
+	auto previous_handler = std::signal(SIGABRT, abort_handler);
+	if (previous_handler == SIG_ERR) {
+		std::cerr << "Setup failed\n";
+		return EXIT_FAILURE;
+	}
+	::benchmark::Initialize(&argc, argv);
+	if (::benchmark::ReportUnrecognizedArguments(argc, argv))
+		return 1;
+	::benchmark::RunSpecifiedBenchmarks();
+	::benchmark::Shutdown();
+	return 0;
 }

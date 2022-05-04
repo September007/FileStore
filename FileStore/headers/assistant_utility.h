@@ -389,4 +389,9 @@ template <typename T> inline T from_string(string str) /**< serialize interface*
  * @note instead of filesystem::path::parent_path(),so \deprecated
  */
 string GetParentDir(string& path);
+/**
+ * get thread id for format.
+ */
+DLL_INTERFACE_API
+unsigned int Get_Thread_Id();
 #endif	 // ASSISTANT_UTILITY_HEAD

@@ -5,8 +5,9 @@
     "journalPath": "G:/FileStore/journalPath",
     "kvPath": "G:/FileStore/kv",
     "rbPath": "G:/FileStore/rb",
+    "logPath": "F:/logs",
 
-    "journal_callback_worker_count": 8,
+    "journal_callback_worker_count": 4,
     "journal_write_worker_count": 8,
     "default_block_size": 4194304,
 

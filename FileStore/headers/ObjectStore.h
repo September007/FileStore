@@ -10,6 +10,13 @@
 #include <object.h>
 
 #include <string>
+// since ObjectStore inmport Context ctx as member ,we can use this macro
+#define CTX_LOG_INFO(logname, msg)                                                                 \
+	LOG_INFO(logname, fmt::format("{}:{}", Get_Thread_Id(), msg), true, "", ctx->logpath);
+#define CTX_LOG_WARN(logname, msg)                                                                 \
+	LOG_WARN(logname, fmt::format("{}:{}", Get_Thread_Id(), msg), true, "", ctx->logpath);
+#define CTX_LOG_ERROR(logname, msg)                                                                \
+	LOG_ERROR(logname, fmt::format("{}:{}", Get_Thread_Id(), msg), true, "", ctx->logpath);
 
 /*! \fn typedef std::function<void()> CallBackType;
  *  callback type
@@ -91,7 +98,7 @@ protected:
 		auto rbPath	   = GetReferedBlockStoragePath(rb, root_path);
 		// ctx->m_WriteFile(rbPath, data, true);
 		RecordData(rbPath, data);
-		LOG_INFO("rb_log",
+		CTX_LOG_INFO("rb_log",
 			fmt::format("add new rb[{} ref:{} ,path:{}]", rb.serial, rb.refer_count,
 				GetReferedBlockStoragePath(rb, root_path)));
 		return rb;

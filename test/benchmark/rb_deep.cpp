@@ -49,5 +49,3 @@ BENCHMARK(rb_deep_2);
 BENCHMARK(rb_deep_4);
 BENCHMARK(rb_deep_2);
 BENCHMARK(rb_deep_4);
-
-BENCHMARK_MAIN();

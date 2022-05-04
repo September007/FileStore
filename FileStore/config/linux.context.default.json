@@ -5,6 +5,8 @@
     "journalPath": "./journalPath",
     "kvPath": "./kv",
     "rbPath": "./rb",
+    "logPath": "./logs",
+
 
     "journal_callback_worker_count": 8,
     "journal_write_worker_count": 8,
