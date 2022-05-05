@@ -33,7 +33,7 @@ void JournalingObjectStore::UnregisterCallBack(CallBackIndex idx)
 	callbacks.erase(idx);
 }
 
-void JournalingObjectStore::SubmitCallbacks(CallBackIndex idx)
+void JournalingObjectStore::SubmitCallbacks(CallBackIndex idx, bool syn_exec)
 {
 	vector<CallBackType> tasks;
 	{
@@ -41,8 +41,12 @@ void JournalingObjectStore::SubmitCallbacks(CallBackIndex idx)
 		tasks = move(callbacks[idx]);
 	}
 	UnregisterCallBack(idx);
-	for (auto& cb : tasks)
-		callback_workers.enqueue(move(cb));
+	if (!syn_exec)
+		for (auto& cb : tasks)
+			callback_workers.enqueue(move(cb));
+	else
+		for (auto& cb : tasks)
+			cb();
 }
 
 ReferedBlock JournalingObjectStore::GetNewReferedBlock() { return ++atomic_serial; }
@@ -62,7 +66,8 @@ bool JournalingObjectStore::Mount(Context* ctx)
 	set<ReferedBlock> sr;
 	for (auto& prb : previousRB) {
 		buffer buf(prb.first), sbuf(prb.second);
-		auto   prefix = ::Read<string>(buf);
+		auto   prefix = buf.data.substr(0, rbprefix.size());
+		buf.offset += rbprefix.size();
 		CTX_LOG_EXPECT_EQ(ctx->name, prefix, rbprefix, "");
 		auto rb_s	  = ::Read<rbsT>(buf);
 		auto rb_refer = ::Read<rbrT>(sbuf);
@@ -87,7 +92,7 @@ void JournalingObjectStore::Modify(
 {
 }
 void JournalingObjectStore::Submit_wope(WOPE wope, CallBackType when_log_done,
-	CallBackType when_journal_done, CallBackType when_flush_done)
+	CallBackType when_journal_done, CallBackType when_flush_done, vector<bool> sync_exec)
 {
 	CTX_LOG_INFO(ctx->name,
 		fmt::format("wope:[ gh:[{}:{}] ,new_gh:[{}:{}] in form of [name:generation]]",
@@ -101,8 +106,9 @@ void JournalingObjectStore::Submit_wope(WOPE wope, CallBackType when_log_done,
 	RegisterCallback(flush_done, move(when_flush_done));
 
 	//@wope phase.1 create log
-	omap.Write_Meta<opeIdType, WOPE>(GetOpeId(wope), wope);
-	SubmitCallbacks(log_done);
+	omap.Write_Meta(GetOpeId(wope), as_string(wope));
+	// cout << "submit into log " << GetOpeId(wope) << endl;
+	SubmitCallbacks(log_done, sync_exec[0]);
 
 	callback_workers.enqueue([wope = move(wope), pthis = this, log_done, journal_done, flush_done] {
 		pthis->do_wope(wope, log_done, journal_done, flush_done);
@@ -134,7 +140,7 @@ void JournalingObjectStore::WithDraw_wope(WOPE wope, CallBackType when_withdraw_
 }
 
 void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
-	CallBackIndex when_journal_done, CallBackIndex when_flush_done)
+	CallBackIndex when_journal_done, CallBackIndex when_flush_done, vector<bool> sync_exec)
 {
 	/**  wope phase.1 is create log, which is done inside   Submit_wope() */
 
@@ -185,7 +191,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 	//@wope phase2.4 register new gh
 	//@dataflow kv gh create gh:orb
 	omap.Write_Meta<GHObject_t, ObjectWithRB>(wope.new_ghobj, orb);
-	SubmitCallbacks(when_journal_done);
+	SubmitCallbacks(when_journal_done, sync_exec[1]);
 	/** wope phase.3 log flush
 	 *   copy block data to fs path
 	 */
@@ -206,7 +212,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 			}
 		}
 	}
-	SubmitCallbacks(when_flush_done);
+	SubmitCallbacks(when_flush_done, sync_exec[2]);
 	{
 		/** wope phase.4 delete relative log in the omap and log file in journal
 		 *  1. get opeid
@@ -218,6 +224,7 @@ void JournalingObjectStore::do_wope(WOPE wope, CallBackIndex when_log_done,
 		auto p_time_stamp			 = opeid.find_last_of(":");
 		auto opeid_with_no_timestamp = opeid.substr(0, p_time_stamp);
 		omap.EraseMatchPrefix(opeid_with_no_timestamp);
+		// cout << "trying delete " << opeid_with_no_timestamp << endl;
 		auto id		 = Get_Thread_Id();
 		namespace fs = filesystem;
 		auto perm	 = [](fs::perms p) -> string {
@@ -305,7 +312,7 @@ opeIdType JournalingObjectStore::GetOpeId(const ROPE& rope)
 	return fmt::format("{}{}:{}", ctx->wope_log_head, GetObjUniqueStrDesc(rope.ghobj), time_stamp);
 }
 
-void JournalingObjectStore::RePlay()
+vector<shared_ptr<WOPE>> JournalingObjectStore::RePlay()
 {
 
 	/**
@@ -314,9 +321,8 @@ void JournalingObjectStore::RePlay()
 	 *  3. reload each ope
 	 */
 	// 1
-	auto undone_wopes
-		= omap.GetMatchPrefix(omap._Create_type_headed_key<decltype(GetOpeId(declval<WOPE>())),
-							  decltype(GetOpeId(declval<WOPE>()))>(ctx->wope_log_head));
+	auto		 undone_wopes = omap.GetMatchPrefix(ctx->wope_log_head);
+	auto		 all		  = omap.GetMatchPrefix("");
 	// 2
 	vector<WOPE> wopes;
 	wopes.reserve(undone_wopes.size());
@@ -334,33 +340,39 @@ void JournalingObjectStore::RePlay()
 	}
 	// 3
 	// \todo : how do we deal with the callbacks?
+	vector<shared_ptr<WOPE>> ret;
 	for (auto& wope : wopes) {
-		this->callback_workers.enqueue([wope = move(wope), pthis = this] {
-			auto when_log_done_idx	   = pthis->GetNewCallBackIndex();
-			auto when_journal_done_idx = pthis->GetNewCallBackIndex();
-			auto when_flush_done_idx   = pthis->GetNewCallBackIndex();
-			/**
-			when reload wope ,we already lost original callback, so we are gonna use default
-			callback specified by Context::replay_default_callback_when_log_done .etc but after
-			do_wope() exit after submit callbacks,then fall off this lambda,the stack variable like
-			wope would deconstruct,but the callbacks which need wope is not promised to be
-			completed,so need make_shared to extend life time of wope
-			code like this `auto shared_wope =
-			make_shared<WOPE>(move(wope));pthis->ctx->replay_default_callback_when_log_done(shared_wope);
-			});`
-			*/
-			auto shared_wope = make_shared<WOPE>(move(wope));
-			pthis->RegisterCallback(when_log_done_idx, [pthis = pthis, shared_wope] {
-				pthis->ctx->replay_default_callback_when_log_done(shared_wope);
-			});
-			pthis->RegisterCallback(when_journal_done_idx, [pthis = pthis, shared_wope] {
-				pthis->ctx->replay_default_callback_when_journal_done(shared_wope);
-			});
-			pthis->RegisterCallback(when_flush_done_idx, [pthis = pthis, shared_wope] {
-				pthis->ctx->replay_default_callback_when_flush_done(shared_wope);
-			});
-			pthis->do_wope(
-				*shared_wope.get(), when_log_done_idx, when_journal_done_idx, when_flush_done_idx);
+		// this->callback_workers.enqueue([wope = move(wope), pthis = this] {
+		auto pthis				   = this;
+		auto when_log_done_idx	   = pthis->GetNewCallBackIndex();
+		auto when_journal_done_idx = pthis->GetNewCallBackIndex();
+		auto when_flush_done_idx   = pthis->GetNewCallBackIndex();
+		/**
+		when reload wope ,we already lost original callback, so we are gonna use default
+		callback specified by Context::replay_default_callback_when_log_done .etc but after
+		do_wope() exit after submit callbacks,then fall off this lambda,the stack variable like
+		wope would deconstruct,but the callbacks which need wope is not promised to be
+		completed,so need make_shared to extend life time of wope
+		code like this `auto shared_wope =
+		make_shared<WOPE>(move(wope));pthis->ctx->replay_default_callback_when_log_done(shared_wope);
+		});`
+		*/
+		auto shared_wope = make_shared<WOPE>(move(wope));
+		ret.push_back(shared_wope);
+		pthis->RegisterCallback(when_log_done_idx, [pthis = pthis, shared_wope] {
+			pthis->ctx->replay_default_callback_when_log_done(shared_wope);
 		});
+		pthis->RegisterCallback(when_journal_done_idx, [pthis = pthis, shared_wope] {
+			pthis->ctx->replay_default_callback_when_journal_done(shared_wope);
+		});
+		pthis->RegisterCallback(when_flush_done_idx, [pthis = pthis, shared_wope] {
+			pthis->ctx->replay_default_callback_when_flush_done(shared_wope);
+		});
+		this->callback_workers.enqueue([=] {
+			pthis->do_wope(*shared_wope.get(), when_log_done_idx, when_journal_done_idx,
+				when_flush_done_idx, { true, true, true });
+		});
+		//});
 	}
+	return ret;
 }

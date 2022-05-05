@@ -17,6 +17,12 @@ using CallBackIndex = uint64_t;
  * @brief implement basic journal logic.
  */
 class DLL_INTERFACE_API JournalingObjectStore : public ObjectStore {
+public:
+	/** type of ObjectMap */
+	using ObjectMapType = ObjectMap<true>;
+	/** for debug */
+	ObjectMapType& GetOmap() { return omap; }
+
 protected:
 	/** journal storage path,using as rb root path*/
 	std::string										   journalpath;
@@ -36,7 +42,7 @@ protected:
 	void		  RegisterCallback(CallBackIndex idx, vector<CallBackType> calls);
 	void		  MergeCallback(CallBackIndex to, const vector<CallBackIndex>& froms);
 	void		  UnregisterCallBack(CallBackIndex idx);
-	void		  SubmitCallbacks(CallBackIndex idx);
+	void		  SubmitCallbacks(CallBackIndex idx, bool syn_exec = false);
 	/** work for GetNewReferedBlock */
 	atomic<decltype(ReferedBlock::serial)> atomic_serial;
 	/** inherite from BlockStore */
@@ -47,12 +53,12 @@ protected:
 	 * @note initialization using Context::kvpath, Mount when JournalingObjectStore::Mount(),
 	 * UnMount() too
 	 */
-	ObjectMap<true>						   omap;
+	ObjectMapType						   omap;
 	/**
 	 * as name indicating
 	 */
 	void		do_wope(WOPE wope, CallBackIndex when_log_done, CallBackIndex when_journal_done,
-			   CallBackIndex when_flush_done);
+			   CallBackIndex when_flush_done, vector<bool> sync_exec = { false, false, false });
 	/** do read operation.
 	 *  although do_rope() take a when_read_done,but call { when_read_done } should after set
 	 *  rope_result into reference param {rope_reulst} from Submit_rope() ,so when_read_done would
@@ -64,25 +70,19 @@ protected:
 	/**
 	 * hide this interface.
 	 */
-private:
 	void   Write(const GHObject_t& ghobj, const string& data) override;
 	string Read(const GHObject_t& ghobj) override;
 	void   Modify(
 		  const GHObject_t& ghobj, int modifiedArea_start, int len, const string& data) override;
 
-public:
-	opeIdType				  GetOpeId(const WOPE& wope);
-	opeIdType				  GetOpeId(const ROPE& rope);
+	opeIdType						GetOpeId(const WOPE& wope);
+	opeIdType						GetOpeId(const ROPE& rope);
 	/**
-	 * use this to compare with omap.logs to distinguish  unfinished loged-before wope
-	 * with logs which create after boot-time
+	 * @brief record when this JournalingObjectStore created.
+	 * @detailed use this to compare with omap.logs to distinguish  unfinished loged-before wope
+	 * with logs which create after boot-time.
 	 */
-	chrono::system_clock::rep boot_time;
-	/**
-	 * reload unfinished wope .
-	 * @todo reload rope
-	 */
-	void					  RePlay();
+	const chrono::system_clock::rep boot_time;
 
 public:
 	/**
@@ -102,6 +102,12 @@ public:
 	void UnMount();			  /**<*/
 
 	/**
+	 * reload unfinished wope .
+	 * @todo reload rope
+	 * @return count of reloaded wopes
+	 */
+	vector<shared_ptr<WOPE>> RePlay();
+	/**
 	 * submit wope as transcation.
 	 * @note if this function return, that mean this transcation is submitted successfully.
 	 * @note submit any ope is forbidden before call Mount().
@@ -111,7 +117,7 @@ public:
 	 * @param when_flush_done		callback which will be submit when flush done
 	 */
 	void Submit_wope(WOPE wope, CallBackType when_log_done, CallBackType when_journal_done,
-		CallBackType when_flush_done);
+		CallBackType when_flush_done, vector<bool> sync_exec = { false, false, false });
 	/**
 	 * submit rope as transcation.
 	 * @note this transcation is simple as common asynchronous exexcution

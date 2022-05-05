@@ -69,14 +69,30 @@ public:
 		return from_buffer<ValType>(buf);
 	}
 
-	virtual rocksdb::DB* GetDB() { return nullptr; }
+	virtual rocksdb::DB* GetDB() { return db; }
 
 public:
 	bool beginWith(const string& pre, const string& str);
 	template <typename type_head_type> const string& Get_Type_Prefix()
 	{
-		static string ret = as_string(to_string(typeid(remove_cv_t<type_head_type>).hash_code()));
-		return ret;
+#pragma push_macro("test_rets")
+#define test_rets(type)                                                                            \
+	if constexpr (is_same_v<type, ncv>) {                                                          \
+		static string ret = #type;                                                                 \
+		return ret;                                                                                \
+	} else
+		using ncv = remove_cv_t<type_head_type>;
+		test_rets(int);
+		test_rets(string);
+		test_rets(opeIdType);
+		test_rets(ReferedBlock);
+		test_rets(ObjectWithRB);
+		if constexpr (is_same_v<ncv, ncv>) {
+			static string ret
+				= as_string(to_string(typeid(remove_cv_t<type_head_type>).hash_code()));
+			return ret;
+		}
+#pragma pop_macro("test_rets")
 	}
 	/**
 	 * construct presentation of key with its type prefix.
@@ -221,7 +237,11 @@ vector<pair<string, string>> ObjectMap<with_type_head>::GetMatchPrefix(const str
 {
 	auto						 it = db->NewIterator(rocksdb::ReadOptions());
 	vector<pair<string, string>> ret;
-	for (it->SeekForPrev(prefix); it->Valid(); it->Next()) {
+	auto						 p = it->Valid();
+	// it->SeekForPrev(prefix);
+	it->SeekToFirst();
+	auto pp = it->Valid();
+	for (; it->Valid(); it->Next()) {
 		if (beginWith(prefix, it->key().ToString()))
 			ret.push_back({ string(it->key().ToString()), string(it->value().ToString()) });
 	}
@@ -233,15 +253,31 @@ vector<pair<string, string>> ObjectMap<with_type_head>::GetMatchPrefix(const str
 template <bool with_type_head>
 rocksdb::Status ObjectMap<with_type_head>::EraseMatchPrefix(const string& prefix)
 {
-	rocksdb::Slice start, end;
-	// set start and end
-	auto		   it = db->NewIterator(ReadOptions());
-
-	for (it->SeekForPrev(prefix); beginWith(prefix, it->key().ToString()); it->Next()) {
-		db->Delete(WriteOptions(), it->key());
+	//	rocksdb::Slice start, end;
+	//	// set start and end
+	//	auto		   it = db->NewIterator(ReadOptions());
+	//	it->SeekForPrev(prefix);
+	//	if (!it->Valid())
+	//		goto ret_point;
+	//	if (!beginWith(prefix, it->key().ToString()))
+	//		it->Next();
+	//
+	//	for (; it->Valid() && beginWith(prefix, it->key().ToString()); it->Next()) {
+	//		db->Delete(WriteOptions(), it->key());
+	//	}
+	// ret_point:
+	//	auto ret = it->status();
+	//	delete it;
+	//	return ret;
+	auto it = db->NewIterator(ReadOptions());
+	// it->SeekForPrev(prefix);
+	it->SeekToFirst();
+	for (; it->Valid(); it->Next()) {
+		if (beginWith(prefix, it->key().ToString()))
+			db->Delete(WriteOptions(), it->key());
 	}
 	auto ret = it->status();
-
+	// dont forget to delete it
 	delete it;
 	return ret;
 }

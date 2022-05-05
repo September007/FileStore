@@ -91,7 +91,7 @@ public:
 	static bool			 is_temp_pool(int64_t pool) { return pool <= POOL_TEMP_START; }
 	static int64_t		 get_temp_pool(int64_t pool) { return POOL_TEMP_START - pool; }
 	static bool			 is_meta_pool(int64_t pool) { return pool == POOL_META; }
-	auto				 GetES() const { return make_tuple(&oid, &snap, &hash, &max); }
+	auto				 GetES() const { return make_tuple(&oid, &snap, &hash, &max, &pool); }
 };
 
 using gen_t = int64_t;
@@ -192,9 +192,11 @@ public:
 //@follow definition of GHObject_t
 // get the unique decription str for a ghobj
 inline auto GetObjUniqueStrDesc(GHObject_t const& ghobj)
-{
-	auto str = fmt::format("{}{:0>}{}{}{:0>}{:0>}", ghobj.owner, ghobj.hobj.pool,
-		ghobj.hobj.oid.name, ghobj.hobj.snap.time_stamp, ghobj.generation, ghobj.shard_id);
+{ /*
+	 auto str = fmt::format("{}{:0>}{}{}{:0>}{:0>}", ghobj.owner, ghobj.hobj.pool,
+		 ghobj.hobj.oid.name, ghobj.hobj.snap.time_stamp, ghobj.generation, ghobj.shard_id);*/
+	auto str = fmt::format(
+		"{}{:0>}{}{}", ghobj.owner, ghobj.hobj.pool, ghobj.hobj.oid.name, ghobj.generation);
 	return str;
 }
 

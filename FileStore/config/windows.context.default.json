@@ -7,12 +7,12 @@
     "rbPath": "G:/FileStore/rb",
     "logPath": "F:/logs",
 
-    "journal_callback_worker_count": 24,
+    "journal_callback_worker_count": 12,
     "journal_write_worker_count": 8,
     "default_block_size": 4194304,
 
-    "wope_log_head": "rope_log::",
-    "rope_log_head": "wope_log::",
+    "wope_log_head": "wope_log::",
+    "rope_log_head": "rope_log::",
 
     "traits": {
       "using_epoll": true,

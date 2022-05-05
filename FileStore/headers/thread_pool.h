@@ -92,8 +92,8 @@ private:
 					std::unique_lock<std::mutex> lock(pool_.mutex_);
 
 					pool_.cond_.wait(lock, [&] { return !pool_.jobs_.empty() || pool_.shutdown_; });
-
-					if (pool_.shutdown_ && pool_.jobs_.empty()) {
+					// will not wati until all job down any more
+					if (pool_.shutdown_ /* && pool_.jobs_.empty()*/) {
 						break;
 					}
 					pool_.busyCount++;
