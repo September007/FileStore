@@ -196,7 +196,7 @@ inline auto GetObjUniqueStrDesc(GHObject_t const& ghobj)
 	 auto str = fmt::format("{}{:0>}{}{}{:0>}{:0>}", ghobj.owner, ghobj.hobj.pool,
 		 ghobj.hobj.oid.name, ghobj.hobj.snap.time_stamp, ghobj.generation, ghobj.shard_id);*/
 	auto str = fmt::format(
-		"{}{:0>}{}{}", ghobj.owner, ghobj.hobj.pool, ghobj.hobj.oid.name, ghobj.generation);
+		"{}{:0>}{}[{}]", ghobj.owner, ghobj.hobj.pool, ghobj.hobj.oid.name, ghobj.generation);
 	return str;
 }
 

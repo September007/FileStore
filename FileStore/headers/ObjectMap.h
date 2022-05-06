@@ -204,8 +204,17 @@ template <bool with_type_head> bool ObjectMap<with_type_head>::Mount(Context* co
 template <bool with_type_head> bool ObjectMap<with_type_head>::UnMount()
 {
 	std::unique_lock lg(_m);
-	if (db != nullptr)
+	if (db != nullptr) {
+		db->FlushWAL(true);
+		rocksdb::FlushOptions fo;
+		auto				  p1 = GetMatchPrefix("wope_log::");
+		// fo.allow_write_stall = true;
+		fo.wait = true;
+		db->Flush(fo);
+
+		auto p = GetMatchPrefix("wope_log::");
 		db->Close();
+	}
 	db = nullptr;
 	return true;
 }
@@ -214,7 +223,17 @@ template <bool with_type_head>
 rocksdb::Status ObjectMap<with_type_head>::Write_Meta(const string& key, const string& value)
 {
 	std::unique_lock lg(_m);
-	auto			 ret = db->Put(rocksdb::WriteOptions(), key, value);
+	auto			 wp = rocksdb::WriteOptions();
+	wp.sync				= true;
+	auto ret			= db->Put(wp, key, value);
+	bool p				= ret.ok();
+	if (!ret.ok())
+		LOG_ERROR("Rocksdb", fmt::format("write not ok,[{}]", ret.ToString()));
+	// MAC_Area(OMAP_WRITE_CHECK, {
+	//	string v;
+	//	Read_Meta(key, v);
+	//	LOG_EXPECT_EQ("OMAP_WRITE_CHECK", v, value);
+	// });
 	return ret;
 }
 

@@ -21,3 +21,7 @@
 #endif
 /** shut down some *port warning */
 #pragma warning(disable : 4251)
+
+#define OMAP_WRITE_CHECKArea(l, ...) l, ##__VA_ARGS__
+
+#define MAC_Area(mac, l, ...) mac##Area(l, ##__VA_ARGS__)

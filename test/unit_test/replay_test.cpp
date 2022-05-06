@@ -2,40 +2,20 @@
 #include <test_head.h>
 #include <vector>
 using namespace std;
-inline vector<WOPE> create_test_WOPES(
-	int sz, const unsigned int block_cnt = 4, int block_data_length = 3)
-{
-	GHObject_t gh;
-	gh.hobj.oid.name = "test_obj";
-	auto new_gh		 = gh;
-	WOPE wope(gh, new_gh, vector<WOPE::opetype> { block_cnt, WOPE::opetype::Insert }, {}, {});
-	wope.block_datas.reserve(block_cnt);
-	for (int i = 0; i < int(block_cnt); ++i) {
-		wope.block_nums.push_back(i);
-		wope.block_datas.push_back(string(block_data_length, '0' + i));
-	}
-	vector<WOPE> wopes(sz, wope);
 
-	for (int i = 0; i < sz; ++i)
-		wopes[i].new_ghobj.generation = gh.generation + i + 1;
-
-	for (int i = 0; i < sz; ++i)
-		wopes[i].new_ghobj.generation = i + 1;
-	return move(wopes);
-}
-string lines(int i) { return string(i, '*'); }
+string lines(int i) { return string(i, ' '); }
 
 struct RePlay_Test {
 
 	Context				 ctx;
-	static constexpr int tries		  = 50;
+	static constexpr int tries		  = 200;
 	atomic_int			 log_done	  = 0;
 	atomic_int			 flush_done	  = 0;
 	atomic_int			 journal_done = 0;
 	atomic_bool			 shut_down	  = false;
-	vector<WOPE>		 wopes		  = create_test_WOPES(tries, 20, 4096);
+	vector<WOPE>		 wopes		  = create_test_WOPES(tries, 10, 4096);
 	// states of wopes
-	bool				 states[tries][3] = { 0 };
+	vector<vector<int>>	 states = vector<vector<int>> { tries, { false, false, false } };
 
 	string states_as_string(int i)
 	{
@@ -50,7 +30,7 @@ struct RePlay_Test {
 		auto   percs = [&](int ii) { return 100 * ii / tries; };
 		string str	 = fmt::format(R"(
 {}
-------{:10}------
+before circle  {:10}   
 {:<10}{}
 {:<10}{}
 {:<10}{}
@@ -65,13 +45,13 @@ total:	submit:{}%	journal:{}%	flush:{}%
 		ctx.load("");
 		ctx.replay_default_callback_when_journal_done = [&](shared_ptr<WOPE> wope) {
 			journal_done++;
-			auto p		 = wope->new_ghobj.generation;
-			states[p][1] = 1;
+			auto p			 = wope->new_ghobj.generation;
+			states[p - 1][1] = 1;
 		};
 		ctx.replay_default_callback_when_flush_done = [&](shared_ptr<WOPE> wope) {
 			flush_done++;
-			auto p		 = wope->new_ghobj.generation;
-			states[p][2] = 1;
+			auto p			 = wope->new_ghobj.generation;
+			states[p - 1][2] = 1;
 		};
 	}
 
@@ -79,29 +59,35 @@ total:	submit:{}%	journal:{}%	flush:{}%
 	void Run_Main()
 	{
 		FileStore fs;
-		print_states(60, "before start run filestore");
+		// print_states(60, "before start run filestore");
 		fs.Mount(&ctx);
+		// static int cnt = 0;
+		// cnt++;
+		// if (cnt % 2 == 0) {
+		//	auto wopes = fs.GetOmap().GetMatchPrefix(ctx.wope_log_head);
+		//	cout << "founded " << wopes.size() << " wopes in omap" << endl;
+		// }
 		auto p = fs.RePlay();
-		cout << "reloaded " << p.size() << "ope" << endl;
+		cout << "reloaded " << p.size() << " wope" << endl;
 		map<int, int> m;
 		for (auto& wope : p)
 			m[wope->new_ghobj.generation] = 1;
 		for (int j = 0; j < wopes.size(); ++j) {
-			if (states[j][2] || m[j + 1])
+			if (states[j][0] || m[j + 1])
 				continue;
 			fs.Submit_wope(
 				wopes[j],
-				[j = j, ld = &log_done, sta = states] {
+				[j = j, ld = &log_done, sta = &states] {
 					(*ld)++;
-					sta[j][0] = true;
+					(*sta)[j][0] = 1;
 				},
-				[j = j, ld = &journal_done, sta = states] {
+				[j = j, ld = &journal_done, sta = &states] {
 					(*ld)++;
-					sta[j][1] = true;
+					(*sta)[j][1] = true;
 				},
-				[j = j, ld = &flush_done, sta = states] {
+				[j = j, ld = &flush_done, sta = &states] {
 					(*ld)++;
-					sta[j][2] = true;
+					(*sta)[j][2] = true;
 				},
 				{ true, true, true });
 		}
@@ -111,11 +97,6 @@ total:	submit:{}%	journal:{}%	flush:{}%
 				this_thread::sleep_for(chrono::milliseconds(100));
 			else {
 				shut_down = false;
-				FlushOptions fo;
-				fo.allow_write_stall = true;
-
-				auto db = fs.GetOmap().GetDB();
-				db->Flush(fo);
 				break;
 			}
 	}
@@ -128,14 +109,38 @@ total:	submit:{}%	journal:{}%	flush:{}%
 	}
 };
 TEST(TMP2, replay)
-{
+try {
 	RePlay_Test rt;
 	rt.init();
+	{
+
+		FileStore fs;
+		fs.Mount(&rt.ctx);
+		{
+			set<string> ss;
+			for (auto& wope : rt.wopes) {
+				auto p = ss.insert(fs.GetOpeId(wope));
+				if (!p.second)
+					p.second;
+			}
+		}
+		// auto rds		= fs.GetOmap().GetMatchPrefix(fs.ctx->wope_log_head);
+		// auto rds_replay = fs.RePlay();
+		// for (auto& wope : rt.wopes)
+		//	fs.GetOmap().Write_Meta(fs.GetOpeId(wope), as_string(wope));
+	}
 	while (rt.unfinished()) {
-		thread th(&RePlay_Test::Run_Main, &rt);
-		this_thread::sleep_for(chrono::milliseconds(2000));
-		rt.shut_down = true;
-		th.join();
+		static int tms = 0;
+		tms++;
+		rt.print_states(100, fmt::format("{:>2}", tms));
+		{
+			thread th(&RePlay_Test::Run_Main, &rt);
+			this_thread::sleep_for(chrono::milliseconds(2000));
+			rt.shut_down = true;
+			th.join();
+		}
 	}
 	rt.print_states(60, "after all");
+} catch (std::exception& e) {
+	cout << e.what() << endl;
 }

@@ -15,6 +15,7 @@
  */
 
 class DLL_INTERFACE_API FileStore : public JournalingObjectStore {
+	friend class TMP2_replay_Test;
 
 public:
 	/** actually nothing to do but recurisvely call JournalingObjectStore::Mount(). */

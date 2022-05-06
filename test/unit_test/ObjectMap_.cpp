@@ -1,3 +1,4 @@
+#include <FileStore.h>
 #include <objectMap.h>
 #include <test_head.h>
 #define head objectMap
